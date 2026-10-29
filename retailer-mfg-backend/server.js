@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('./models/User');
+const Product = require('./models/Product');
+const Order = require('./models/Order');
 const app = express();
 
 app.use(express.json());
@@ -90,6 +92,55 @@ app.post('/api/users/login', async (req, res) => {
 
 app.post('/api/manufacturer/queue', verifyRole('manufacturer'), (req, res) => {
     res.json({ message: "Access Granted: Welcome to the Manufacturer Production Queue!" });
+});
+
+// Feature 2: Create Product (Restricted to Manufacturers)
+app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
+    try {
+        const { name, description, price, stockCount } = req.body;
+        
+        // req.user is attached by your JWT middleware
+        const newProduct = new Product({
+            manufacturerId: req.user.userId, 
+            name,
+            description,
+            price,
+            stockCount
+        });
+        
+        await newProduct.save();
+        res.status(201).json({ message: "Product added to catalog!", product: newProduct });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Feature 2: Place Order (Restricted to Retailers)
+app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
+    try {
+        const { productId, quantity } = req.body;
+        
+        const newOrder = new Order({
+            retailerId: req.user.userId,
+            productId,
+            quantity
+        });
+        
+        await newOrder.save();
+        res.status(201).json({ message: "Order placed successfully!", order: newOrder });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Feature 2: Fetch Product Catalog (Public route for the frontend storefront)
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await Product.find();
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 const PORT = 5000;
