@@ -4,12 +4,14 @@ const orderSchema = new mongoose.Schema({
     retailerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        index: true
     },
     productId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
-        required: true
+        required: true,
+        index: true
     },
     quantity: { 
         type: Number, 
