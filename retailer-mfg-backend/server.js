@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const express = require('express');
 const mongoose = require('mongoose');
+const redlock = require('./utils/redisLock');
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
@@ -115,21 +116,59 @@ app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
     }
 });
 
-// Feature 2: Place Order (Restricted to Retailers)
+// Feature 2: Place Order with Distributed Redis Lock (Restricted to Retailers)
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
+    const { productId, quantity } = req.body;
+    
+    // Define a unique lock key for this specific product
+    const resource = `locks:product:${productId}`;
+    const ttl = 5000; // Lock expires automatically after 5 seconds to prevent deadlocks
+    
+    let lock;
     try {
-        const { productId, quantity } = req.body;
-        
+        // 1. Acquire the lock: No other process can touch this product until we are done
+        lock = await redlock.acquire([resource], ttl);
+
+        // 2. Fetch the current stock ONLY after securing the lock
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // 3. Verify sufficient inventory to prevent negative stock
+        if (product.stockCount < quantity) {
+            return res.status(400).json({ error: 'Insufficient stock to fulfill this order' });
+        }
+
+        // 4. Create the transactional order record
         const newOrder = new Order({
             retailerId: req.user.userId,
             productId,
             quantity
         });
-        
         await newOrder.save();
-        res.status(201).json({ message: "Order placed successfully!", order: newOrder });
+
+        // 5. Decrement the inventory safely
+        product.stockCount -= quantity;
+        await product.save();
+
+        res.status(201).json({ message: "Order placed successfully!", order: newOrder, remainingStock: product.stockCount });
+        
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        // If Redlock fails to acquire the lock after its retries, it throws an ExecutionError
+        if (error.name === 'ExecutionError') {
+            return res.status(429).json({ error: 'High traffic on this item. Please try your order again.' });
+        }
+        res.status(500).json({ error: error.message });
+    } finally {
+        // 6. ALWAYS release the lock so the next Retailer in line can purchase
+        if (lock) {
+            try {
+                await lock.release();
+            } catch (err) {
+                console.error('Failed to release the lock', err);
+            }
+        }
     }
 });
 
