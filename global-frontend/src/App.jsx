@@ -1,32 +1,35 @@
 import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
+import Layout from './components/Layout';
 
 function App() {
-  // Pull the global state and functions from your Context
-  const { user, login, logout } = useContext(AuthContext);
+    const { login } = useContext(AuthContext);
 
-  return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Platform Global State Test</h1>
-
-      <div style={{ margin: '2rem 0', padding: '1rem', border: '2px solid black' }}>
-        {/* Dynamically render the UI based on the global user state */}
-        <h2>Current Status: {user ? `Logged in as ${user.role}` : 'Not Logged In'}</h2>
-      </div>
-
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <button onClick={() => login({ role: 'retailer', token: 'dummy_token_123' })}>
-          Simulate Retailer Login
-        </button>
-        <button onClick={() => login({ role: 'manufacturer', token: 'dummy_token_456' })}>
-          Simulate Manufacturer Login
-        </button>
-        <button onClick={logout}>
-          Logout
-        </button>
-      </div>
-    </div>
-  )
+    return (
+        <Layout>
+            <div className="bg-white rounded-xl shadow-sm border p-8 text-center max-w-2xl mx-auto mt-10">
+                <h1 className="text-2xl font-bold text-gray-800 mb-4">Architecture Simulation Interface</h1>
+                <p className="text-gray-600 mb-8">
+                    Use these buttons to simulate logins and watch the global Navbar react instantly via the AuthContext.
+                </p>
+                
+                <div className="flex justify-center gap-4">
+                    <button 
+                        onClick={() => login({ role: 'retailer', token: 'dummy_123' })}
+                        className="px-6 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition"
+                    >
+                        Simulate Retailer
+                    </button>
+                    <button 
+                        onClick={() => login({ role: 'manufacturer', token: 'dummy_456' })}
+                        className="px-6 py-2 bg-purple-600 text-white rounded shadow hover:bg-purple-700 transition"
+                    >
+                        Simulate Manufacturer
+                    </button>
+                </div>
+            </div>
+        </Layout>
+    );
 }
 
 export default App;
