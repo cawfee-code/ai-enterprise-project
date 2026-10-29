@@ -1,8 +1,14 @@
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import useCartStore from '../store/useCartStore';
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
+    
+    // Pull the cart array directly from Zustand
+    const cart = useCartStore((state) => state.cart);
+    // Calculate total items in the cart dynamically
+    const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
     return (
         <nav className="bg-gray-900 text-white shadow-lg">
@@ -15,6 +21,14 @@ const Navbar = () => {
                     <div className="flex items-center gap-4">
                         {user ? (
                             <>
+                                {user.role === 'retailer' && (
+                                    <div className="relative mr-4 text-gray-300">
+                                        <span className="font-medium">Cart:</span>
+                                        <span className="ml-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                                            {cartCount}
+                                        </span>
+                                    </div>
+                                )}
                                 <span className="px-3 py-1 bg-gray-800 rounded-full text-sm text-gray-300 border border-gray-700">
                                     Role: <span className="font-semibold text-white capitalize">{user.role}</span>
                                 </span>
