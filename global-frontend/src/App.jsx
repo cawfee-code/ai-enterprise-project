@@ -8,16 +8,27 @@ import RegisterManufacturerForm from './components/RegisterManufacturerForm';
 import LoginManufacturerForm from './components/LoginManufacturerForm';
 import ResetPasswordManufacturerForm from './components/ResetPasswordManufacturerForm';
 import ProductRetailerCatalog from './components/ProductRetailerCatalog';
+import RoutingMap from './components/RoutingMap';
 import heroIllustration from './assets/heroIllustration.png';
 import manufacturerIllustration from './assets/Illustration2.png';
 
 function App() {
     const { login, user } = useContext(AuthContext);
-    const [portalMode, setPortalMode] = useState(null); // null | 'retailer' | 'manufacturer'
+    const [portalMode, setPortalMode] = useState(null);
     const [retailerAuthMode, setRetailerAuthMode] = useState('login');
     const [manufacturerAuthMode, setManufacturerAuthMode] = useState('login');
+    const [logistics, setLogistics] = useState(null);
+
     const bgTheme = portalMode === 'manufacturer' || user?.role === 'manufacturer' ? 'manufacturer' :
     portalMode === 'retailer' || user?.role === 'retailer' ? 'retailer' : 'mixed';
+
+    const simulateBulkOrder = () => {
+        setLogistics({
+            routeType: 'bulk_qc_routing',
+            origin: { coordinates: [-122.4194, 37.7749], address: "SF Factory" },
+            destination: { coordinates: [-74.0060, 40.7128], address: "NY Retailer QC Hub" }
+        });
+    };
 
     return (
         <Layout
@@ -136,7 +147,6 @@ function App() {
                                 src={manufacturerIllustration}
                                 alt="Manufacturer production and fulfillment illustration"
                                 className="w-full max-w-xs fade-edges"
-
                             />
                         </div>
 
@@ -189,6 +199,15 @@ function App() {
             {user?.role === 'retailer' && (
                 <div>
                     <h1 className="text-2xl font-bold text-olive-900 mb-6 text-center">Product Catalog</h1>
+                    
+                    <button 
+                        onClick={simulateBulkOrder}
+                        className="mb-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                    >
+                        Simulate Bulk Order Placement
+                    </button>
+                    
+                    {logistics && <RoutingMap logistics={logistics} />}
                     <ProductRetailerCatalog />
                 </div>
             )}

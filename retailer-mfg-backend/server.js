@@ -8,6 +8,7 @@ const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 const Hub = require('./models/Hub');
+const cors = require('cors');
 
 // Utilities
 const redlock = require('./utils/redisLock');
@@ -15,6 +16,7 @@ const calculateDynamicPricing = require('./utils/costEngine');
 const determineRoute = require('./utils/routingMachine');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const dbURI = 'mongodb+srv://watanashi_db_user:ID0oAxFLA49JWNPD@cluster0.qan7boh.mongodb.net/'
