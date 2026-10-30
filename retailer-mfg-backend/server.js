@@ -105,65 +105,8 @@ app.post('/api/users/reset-password', async (req, res) => {
 });
 
 // --- FEATURE 1: Retailer-Specific Authentication ---
-app.post('/api/retailers/register', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        if (!isStrongPassword(password)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
-        }
-
-        const newUser = new User({ email, password, role: 'retailer' });
-        await newUser.save();
-        res.status(201).json({ message: "Retailer registered!", userId: newUser._id });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.post('/api/retailers/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        if (user.role !== 'retailer') {
-            return res.status(403).json({ error: "This account is not registered as a retailer." });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
-
-        const token = issueToken(user);
-        res.json({ message: "Login successful", token });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/retailers/reset-password', async (req, res) => {
-    try {
-        const { email, newPassword } = req.body;
-
-        if (!isStrongPassword(newPassword)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
-        }
-
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        if (user.role !== 'retailer') {
-            return res.status(403).json({ error: "This account is not registered as a retailer." });
-        }
-
-        user.password = newPassword;
-        await user.save();
-
-        res.json({ message: "Password reset successful" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+const retailerAuthRoutes = require('./routes/retailerAuthRoutes');
+app.use('/api/retailers', retailerAuthRoutes);
 
 // --- FEATURE 1: Manufacturer-Specific Authentication ---
 app.post('/api/manufacturers/register', async (req, res) => {
@@ -203,83 +146,8 @@ app.post('/api/manufacturers/login', async (req, res) => {
 });
 
 // --- FEATURE 3: Dynamic Pricing Catalog ---
-app.get('/api/products', async (req, res) => {
-    const products = await Product.find();
-    res.json(products);
-});
-
-app.post('/api/products', verifyRole('manufacturer'), upload.single('designFile'), async (req, res) => {
-    try {
-        const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
-
-        const pricingData = calculateDynamicPricing({
-            baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions
-        });
-
-        const newProduct = new Product({
-            manufacturerId: req.user.userId,
-            name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions,
-            price: pricingData.finalPrice, stockCount,
-            designFileUrl: req.file ? `/uploads/designs/${req.file.filename}` : null
-        });
-
-        await newProduct.save();
-        res.status(201).json({ message: "Product added to catalog!", engineMetrics: pricingData, product: newProduct });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.put('/api/products/:id', verifyRole('manufacturer'), upload.single('designFile'), async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (!product) return res.status(404).json({ error: "Product not found" });
-        if (product.manufacturerId.toString() !== req.user.userId) {
-            return res.status(403).json({ error: "You can only edit your own products" });
-        }
-
-        const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
-
-        if (baseManufacturingCost || targetMarginPercentage || physicalWeightKg || dimensions) {
-            const pricingData = calculateDynamicPricing({
-                baseManufacturingCost: baseManufacturingCost ?? product.baseManufacturingCost,
-                targetMarginPercentage: targetMarginPercentage ?? product.targetMarginPercentage,
-                physicalWeightKg: physicalWeightKg ?? product.physicalWeightKg,
-                dimensions: dimensions ?? product.dimensions
-            });
-            product.price = pricingData.finalPrice;
-        }
-
-        if (name) product.name = name;
-        if (description) product.description = description;
-        if (baseManufacturingCost) product.baseManufacturingCost = baseManufacturingCost;
-        if (targetMarginPercentage) product.targetMarginPercentage = targetMarginPercentage;
-        if (physicalWeightKg) product.physicalWeightKg = physicalWeightKg;
-        if (dimensions) product.dimensions = dimensions;
-        if (stockCount !== undefined) product.stockCount = stockCount;
-        if (req.file) product.designFileUrl = `/uploads/designs/${req.file.filename}`;
-
-        await product.save();
-        res.json({ message: "Product updated!", product });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.delete('/api/products/:id', verifyRole('manufacturer'), async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (!product) return res.status(404).json({ error: "Product not found" });
-        if (product.manufacturerId.toString() !== req.user.userId) {
-            return res.status(403).json({ error: "You can only delete your own products" });
-        }
-
-        await Product.findByIdAndDelete(req.params.id);
-        res.json({ message: "Product deleted" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes(verifyRole, upload));
 
 // --- FEATURE 2: Redis Distributed Lock Orders ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
