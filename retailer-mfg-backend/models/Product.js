@@ -4,6 +4,7 @@ const productSchema = new mongoose.Schema({
     manufacturerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     name: { type: String, required: true, index: true },
     description: { type: String },
+    designFileUrl: { type: String, default: null },
     
     // Feature 3: Dynamic Pricing & Cost Parameters
     baseManufacturingCost: { type: Number, required: true, min: 0 }, // Replaces "Print Cost"
