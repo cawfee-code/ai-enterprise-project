@@ -27,3 +27,17 @@ export async function login({ email, password }) {
     }
     return data;
 }
+
+export async function resetPassword({ email, newPassword }) {
+    const res = await fetch(`${API_BASE}/manufacturers/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, newPassword }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || 'Password reset failed');
+    }
+    return data;
+}

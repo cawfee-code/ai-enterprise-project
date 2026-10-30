@@ -145,6 +145,30 @@ app.post('/api/manufacturers/login', async (req, res) => {
     }
 });
 
+app.post('/api/manufacturers/reset-password', async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+
+        if (!isStrongPassword(newPassword)) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (user.role !== 'manufacturer') {
+            return res.status(403).json({ error: "This account is not registered as a manufacturer." });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ message: "Password reset successful" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- FEATURE 3: Dynamic Pricing Catalog ---
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes(verifyRole, upload));

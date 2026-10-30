@@ -6,6 +6,7 @@ import LoginRetailerForm from './components/LoginRetailerForm';
 import ResetPasswordRetailerForm from './components/ResetPasswordRetailerForm';
 import RegisterManufacturerForm from './components/RegisterManufacturerForm';
 import LoginManufacturerForm from './components/LoginManufacturerForm';
+import ResetPasswordManufacturerForm from './components/ResetPasswordManufacturerForm';
 import ProductRetailerCatalog from './components/ProductRetailerCatalog';
 import heroIllustration from './assets/heroIllustration.png';
 import manufacturerIllustration from './assets/Illustration2.png';
@@ -140,23 +141,30 @@ function App() {
                         </div>
 
                         <div>
-                            {manufacturerAuthMode === 'login' ? (
-                                <LoginManufacturerForm onSuccess={login} />
-                            ) : (
+                            {manufacturerAuthMode === 'login' && <LoginManufacturerForm onSuccess={login} />}
+                            {manufacturerAuthMode === 'register' && (
                                 <RegisterManufacturerForm onSuccess={() => setManufacturerAuthMode('login')} />
+                            )}
+                            {manufacturerAuthMode === 'reset' && (
+                                <ResetPasswordManufacturerForm onSuccess={() => setManufacturerAuthMode('login')} />
                             )}
 
                             <p className="text-sm text-gray-500 mt-4 text-center">
-                                {manufacturerAuthMode === 'login' ? (
+                                {manufacturerAuthMode === 'login' && (
                                     <>
                                         New manufacturer?{' '}
                                         <button onClick={() => setManufacturerAuthMode('register')} className="text-olive-900 font-semibold underline">
                                             Create an account
                                         </button>
+                                        {' '}&middot;{' '}
+                                        <button onClick={() => setManufacturerAuthMode('reset')} className="text-olive-900 font-semibold underline">
+                                            Forgot password?
+                                        </button>
                                     </>
-                                ) : (
+                                )}
+                                {manufacturerAuthMode !== 'login' && (
                                     <>
-                                        Already have an account?{' '}
+                                        Back to{' '}
                                         <button onClick={() => setManufacturerAuthMode('login')} className="text-olive-900 font-semibold underline">
                                             Log in
                                         </button>
