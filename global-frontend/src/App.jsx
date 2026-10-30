@@ -1,45 +1,198 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AuthContext } from './context/AuthContext';
 import Layout from './components/Layout';
-import useCartStore from './store/useCartStore'; // 1. Import the store
+import RegisterRetailerForm from './components/RegisterRetailerForm';
+import LoginRetailerForm from './components/LoginRetailerForm';
+import ResetPasswordRetailerForm from './components/ResetPasswordRetailerForm';
+import RegisterManufacturerForm from './components/RegisterManufacturerForm';
+import LoginManufacturerForm from './components/LoginManufacturerForm';
+import ProductRetailerCatalog from './components/ProductRetailerCatalog';
+import heroIllustration from './assets/heroIllustration.png';
+import manufacturerIllustration from './assets/Illustration2.png';
 
 function App() {
     const { login, user } = useContext(AuthContext);
-    const addToCart = useCartStore((state) => state.addToCart); // 2. Pull the action
+    const [portalMode, setPortalMode] = useState(null); // null | 'retailer' | 'manufacturer'
+    const [retailerAuthMode, setRetailerAuthMode] = useState('login');
+    const [manufacturerAuthMode, setManufacturerAuthMode] = useState('login');
+    const bgTheme = portalMode === 'manufacturer' || user?.role === 'manufacturer' ? 'manufacturer' :
+    portalMode === 'retailer' || user?.role === 'retailer' ? 'retailer' : 'mixed';
 
     return (
-        <Layout>
-            <div className="bg-white rounded-xl shadow-sm border p-8 text-center max-w-2xl mx-auto mt-10">
-                <h1 className="text-2xl font-bold text-gray-800 mb-4">Architecture Simulation Interface</h1>
-                
-                <div className="flex justify-center gap-4 mb-8">
-                    <button 
-                        onClick={() => login({ role: 'retailer', token: 'dummy_123' })}
-                        className="px-6 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition"
-                    >
-                        Simulate Retailer
-                    </button>
-                    <button 
-                        onClick={() => login({ role: 'manufacturer', token: 'dummy_456' })}
-                        className="px-6 py-2 bg-purple-600 text-white rounded shadow hover:bg-purple-700 transition"
-                    >
-                        Simulate Manufacturer
-                    </button>
-                </div>
+        <Layout
+            theme={bgTheme}
+            onLoginAsRetailer={() => setPortalMode('retailer')}
+            onLoginAsManufacturer={() => setPortalMode('manufacturer')}
+        >
+            {!user && portalMode === null && (
+                <div className="text-center py-16">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-olive-900 tracking-tight mb-3">
+                        RUN YOUR STORE EVERYWHERE.
+                    </h1>
+                    <p className="text-gray-600 max-w-xl mx-auto mb-10">
+                        A B2B marketplace connecting retailers and manufacturers —
+                        dynamic pricing, secure orders, and real-time inventory in one place.
+                    </p>
 
-                {/* Only show Add to Cart if logged in as a Retailer */}
-                {user?.role === 'retailer' && (
-                    <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h2 className="text-lg font-semibold text-blue-900 mb-4">Retailer Controls</h2>
-                        <button 
-                            onClick={() => addToCart({ productId: 'widget_1', name: 'Industrial Widget', quantity: 1, price: 299.99 })}
-                            className="px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
+                    <div className="flex justify-center gap-6">
+                        <button
+                            onClick={() => setPortalMode('retailer')}
+                            className="w-40 bg-white rounded-3xl shadow-sm border border-sage-200 p-6 flex flex-col items-center gap-3 hover:shadow-md transition"
                         >
-                            + Add Item to Global Cart
+                            <div className="w-14 h-14 bg-lime-400 rounded-2xl flex items-center justify-center text-2xl">
+                                🏬
+                            </div>
+                            <span className="text-olive-900 font-semibold text-center text-sm">
+                                Login as Retailer
+                            </span>
+                        </button>
+
+                        <button
+                            onClick={() => setPortalMode('manufacturer')}
+                            className="w-40 bg-white rounded-3xl shadow-sm border border-sage-200 p-6 flex flex-col items-center gap-3 hover:shadow-md transition"
+                        >
+                            <div className="w-14 h-14 bg-purple-600 rounded-2xl flex items-center justify-center text-2xl">
+                                🏭
+                            </div>
+                            <span className="text-olive-900 font-semibold text-center text-sm">
+                                Login as Manufacturer
+                            </span>
                         </button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {!user && portalMode === 'retailer' && (
+                <div>
+                    <button onClick={() => setPortalMode(null)} className="text-sm text-gray-500 mb-6 underline">
+                        ← Back to Home
+                    </button>
+
+                    <div className="grid md:grid-cols-2 gap-10 items-center">
+                        <div className="hidden md:flex justify-center">
+                            <img
+                                src={heroIllustration}
+                                alt="Retailer and manufacturer connected through an AI-driven supply chain"
+                                className="w-full max-w-xs fade-edges"
+                            />
+                        </div>
+
+                        <div>
+                            {retailerAuthMode === 'login' && <LoginRetailerForm onSuccess={login} />}
+                            {retailerAuthMode === 'register' && (
+                                <RegisterRetailerForm onSuccess={() => setRetailerAuthMode('login')} />
+                            )}
+                            {retailerAuthMode === 'reset' && (
+                                <ResetPasswordRetailerForm onSuccess={() => setRetailerAuthMode('login')} />
+                            )}
+
+                            <p className="text-sm text-gray-500 mt-4 text-center">
+                                {retailerAuthMode === 'login' && (
+                                    <>
+                                        New retailer?{' '}
+                                        <button onClick={() => setRetailerAuthMode('register')} className="text-olive-900 font-semibold underline">
+                                            Create an account
+                                        </button>
+                                        {' '}&middot;{' '}
+                                        <button onClick={() => setRetailerAuthMode('reset')} className="text-olive-900 font-semibold underline">
+                                            Forgot password?
+                                        </button>
+                                    </>
+                                )}
+                                {retailerAuthMode !== 'login' && (
+                                    <>
+                                        Back to{' '}
+                                        <button onClick={() => setRetailerAuthMode('login')} className="text-olive-900 font-semibold underline">
+                                            Log in
+                                        </button>
+                                    </>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-6">
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-olive-900 tracking-tight mb-3">
+                            RUN YOUR STORE EVERYWHERE.
+                        </h1>
+                        <p className="text-gray-600 max-w-xl mx-auto">
+                            A B2B marketplace connecting retailers and manufacturers —
+                            dynamic pricing, secure orders, and real-time inventory in one place.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {!user && portalMode === 'manufacturer' && (
+                <div>
+                    <button onClick={() => setPortalMode(null)} className="text-sm text-gray-500 mb-6 underline">
+                        ← Back to Home
+                    </button>
+
+                    <div className="grid md:grid-cols-2 gap-10 items-center">
+                        <div className="hidden md:flex justify-center">
+                            <img
+                                src={manufacturerIllustration}
+                                alt="Manufacturer production and fulfillment illustration"
+                                className="w-full max-w-xs fade-edges"
+
+                            />
+                        </div>
+
+                        <div>
+                            {manufacturerAuthMode === 'login' ? (
+                                <LoginManufacturerForm onSuccess={login} />
+                            ) : (
+                                <RegisterManufacturerForm onSuccess={() => setManufacturerAuthMode('login')} />
+                            )}
+
+                            <p className="text-sm text-gray-500 mt-4 text-center">
+                                {manufacturerAuthMode === 'login' ? (
+                                    <>
+                                        New manufacturer?{' '}
+                                        <button onClick={() => setManufacturerAuthMode('register')} className="text-olive-900 font-semibold underline">
+                                            Create an account
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        Already have an account?{' '}
+                                        <button onClick={() => setManufacturerAuthMode('login')} className="text-olive-900 font-semibold underline">
+                                            Log in
+                                        </button>
+                                    </>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-6">
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-olive-900 tracking-tight mb-3">
+                            RUN YOUR STORE EVERYWHERE.
+                        </h1>
+                        <p className="text-gray-600 max-w-xl mx-auto">
+                            A B2B marketplace connecting retailers and manufacturers —
+                            dynamic pricing, secure orders, and real-time inventory in one place.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {user?.role === 'retailer' && (
+                <div>
+                    <h1 className="text-2xl font-bold text-olive-900 mb-6 text-center">Product Catalog</h1>
+                    <ProductRetailerCatalog />
+                </div>
+            )}
+
+            {user?.role === 'manufacturer' && (
+                <div className="bg-white rounded-3xl shadow-lg border border-sage-200 p-8 max-w-md mx-auto text-center">
+                    <h2 className="text-lg font-semibold text-olive-900 mb-2">Manufacturer Portal</h2>
+                    <p className="text-gray-500 text-sm">
+                        Dashboard not built yet — this is Shouvik & Rohon's scope.
+                    </p>
+                </div>
+            )}
         </Layout>
     );
 }

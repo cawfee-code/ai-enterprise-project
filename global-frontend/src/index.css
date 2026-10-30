@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@theme {
+  --color-sage-100: #e7efe0;
+  --color-sage-200: #d7e4ca;
+  --color-olive-900: #2f3b24;
+  --color-lime-400: #d9f99d;
+  --color-lime-500: #c7f264;
+}
+
+@keyframes spinGradient {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animated-gradient-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-gradient-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, #e7efe0, #d7e4ca, #d9f99d, #d7e4ca, #e7efe0);
+  animation: spinGradient 20s linear infinite;
+  z-index: -1;
+}
+
+.animated-gradient-bg-purple {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-gradient-bg-purple::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, #f3e8ff, #e9d5ff, #d8b4fe, #e9d5ff, #f3e8ff);
+  animation: spinGradient 20s linear infinite;
+  z-index: -1;
+}
+
+.animated-gradient-bg-mixed {
+  position: relative;
+  overflow: hidden;
+}
+
+.animated-gradient-bg-mixed::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, #e7efe0, #e9d5ff, #d9f99d, #d8b4fe, #e7efe0);
+  animation: spinGradient 20s linear infinite;
+  z-index: -1;
+}
+
+.fade-edges {
+  -webkit-mask-image: radial-gradient(ellipse at center, black 55%, transparent 85%);
+  mask-image: radial-gradient(ellipse at center, black 55%, transparent 85%);
+}
