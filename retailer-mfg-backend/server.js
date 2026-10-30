@@ -1,35 +1,27 @@
-const multer = require('multer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+
+// Schemas
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
+const Hub = require('./models/Hub');
+
+// Utilities
 const redlock = require('./utils/redisLock');
 const calculateDynamicPricing = require('./utils/costEngine');
-const { isStrongPassword } = require('./utils/validators');
-const issueToken = require('./middleware/issueToken');
+const determineRoute = require('./utils/routingMachine');
 
 const app = express();
-app.use(cors());
 app.use(express.json());
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/designs'),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
-const upload = multer({ storage });
-
-app.use('/uploads', express.static('uploads'));
 
 const dbURI = 'mongodb+srv://watanashi_db_user:ID0oAxFLA49JWNPD@cluster0.qan7boh.mongodb.net/'
 mongoose.connect(dbURI)
     .then(() => console.log('Connected to MongoDB Atlas'))
     .catch((err) => console.log('Database connection error: ', err));
 
-// The Architect's Vault Logic
 const verifyRole = (requiredRole) => {
     return (req, res, next) => {
         const authHeader = req.header('Authorization');
@@ -42,7 +34,7 @@ const verifyRole = (requiredRole) => {
             const verified = jwt.verify(token, 'mySuperSecretKey');
             req.user = verified; 
             if (req.user.role !== requiredRole) {
-                return res.status(403).json({ error: "403 Forbidden: You do not have the correct role" });
+                return res.status(403).json({ error: "403 Forbidden: You do not have the correct role for this route" });
             }
             next(); 
         } catch (error) {
@@ -51,15 +43,10 @@ const verifyRole = (requiredRole) => {
     };
 };
 
-// --- FEATURE 1: Authentication (generic, used by manufacturer forms) ---
+// --- FEATURE 1: Authentication ---
 app.post('/api/users/register', async (req, res) => {
     try {
         const { email, password, role } = req.body;
-
-        if (!isStrongPassword(password)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
-        }
-
         const newUser = new User({ email, password, role });
         await newUser.save();
         res.status(201).json({ message: "User securely registered!", userId: newUser._id });
@@ -84,106 +71,53 @@ app.post('/api/users/login', async (req, res) => {
     }
 });
 
-app.post('/api/users/reset-password', async (req, res) => {
-    try {
-        const { email, newPassword } = req.body;
-
-        if (!isStrongPassword(newPassword)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
-        }
-
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        user.password = newPassword;
-        await user.save();
-
-        res.json({ message: "Password reset successful" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+app.post('/api/manufacturer/queue', verifyRole('manufacturer'), (req, res) => {
+    res.json({ message: "Access Granted: Welcome to the Manufacturer Production Queue!" });
 });
 
-// --- FEATURE 1: Retailer-Specific Authentication ---
-const retailerAuthRoutes = require('./routes/retailerAuthRoutes');
-app.use('/api/retailers', retailerAuthRoutes);
+// --- FEATURE 3: Dynamic Pricing Catalog ---
+app.get('/api/products', async (req, res) => {
+    const products = await Product.find();
+    res.json(products);
+});
 
-// --- FEATURE 1: Manufacturer-Specific Authentication ---
-app.post('/api/manufacturers/register', async (req, res) => {
+app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
+        
+        const pricingData = calculateDynamicPricing({
+            baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions
+        });
 
-        if (!isStrongPassword(password)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
-        }
-
-        const newUser = new User({ email, password, role: 'manufacturer' });
-        await newUser.save();
-        res.status(201).json({ message: "Manufacturer registered!", userId: newUser._id });
+        const newProduct = new Product({
+            manufacturerId: req.user.userId, name, description, baseManufacturingCost, 
+            targetMarginPercentage, physicalWeightKg, dimensions, price: pricingData.finalPrice, stockCount
+        });
+        
+        await newProduct.save();
+        res.status(201).json({ message: "Product added to catalog!", engineMetrics: pricingData, product: newProduct });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 });
 
-app.post('/api/manufacturers/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        if (user.role !== 'manufacturer') {
-            return res.status(403).json({ error: "This account is not registered as a manufacturer." });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
-
-        const token = jwt.sign({ userId: user._id, role: user.role }, 'mySuperSecretKey', { expiresIn: '1h' });
-        res.json({ message: "Login successful", token });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/manufacturers/reset-password', async (req, res) => {
-    try {
-        const { email, newPassword } = req.body;
-
-        if (!isStrongPassword(newPassword)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
-        }
-
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        if (user.role !== 'manufacturer') {
-            return res.status(403).json({ error: "This account is not registered as a manufacturer." });
-        }
-
-        user.password = newPassword;
-        await user.save();
-
-        res.json({ message: "Password reset successful" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- FEATURE 3: Dynamic Pricing Catalog ---
-const productRoutes = require('./routes/productRoutes');
-app.use('/api/products', productRoutes(verifyRole, upload));
-
-// --- FEATURE 2: Redis Distributed Lock Orders ---
+// --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, customerAddress } = req.body;
     const resource = `locks:product:${productId}`;
     const ttl = 5000; 
     let lock;
+    
     try {
         lock = await redlock.acquire([resource], ttl);
         const product = await Product.findById(productId);
         if (!product) return res.status(404).json({ error: 'Product not found' });
         if (product.stockCount < quantity) return res.status(400).json({ error: 'Insufficient stock' });
+
+        // Feature 4: Calculate logistics route based on quantity
+        const mockMfgHub = { type: "Point", coordinates: [-122.4194, 37.7749], address: "SF Factory" };
+        const mockQCHub = { type: "Point", coordinates: [-74.0060, 40.7128], address: "NY Retailer QC" };
+        const routingPlan = determineRoute(quantity, mockMfgHub, mockQCHub, customerAddress);
 
         const newOrder = new Order({ retailerId: req.user.userId, productId, quantity });
         await newOrder.save();
@@ -191,7 +125,12 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
         product.stockCount -= quantity;
         await product.save();
 
-        res.status(201).json({ message: "Order placed successfully!", order: newOrder, remainingStock: product.stockCount });
+        res.status(201).json({ 
+            message: "Order processed safely!", 
+            order: newOrder, 
+            logistics: routingPlan,
+            remainingStock: product.stockCount 
+        });
     } catch (error) {
         if (error.name === 'ExecutionError') return res.status(429).json({ error: 'High traffic. Try again.' });
         res.status(500).json({ error: error.message });
