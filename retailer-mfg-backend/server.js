@@ -9,6 +9,7 @@ const Order = require('./models/Order');
 const redlock = require('./utils/redisLock');
 const calculateDynamicPricing = require('./utils/costEngine');
 const { isStrongPassword } = require('./utils/validators');
+const issueToken = require('./middleware/issueToken');
 
 const app = express();
 app.use(cors());
@@ -124,7 +125,7 @@ app.post('/api/retailers/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-        const token = jwt.sign({ userId: user._id, role: user.role }, 'mySuperSecretKey', { expiresIn: '1h' });
+        const token = issueToken(user);
         res.json({ message: "Login successful", token });
     } catch (error) {
         res.status(500).json({ error: error.message });
