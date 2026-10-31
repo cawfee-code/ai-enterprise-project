@@ -7,11 +7,10 @@ import ResetPasswordRetailerForm from './components/ResetPasswordRetailerForm';
 import RegisterManufacturerForm from './components/RegisterManufacturerForm';
 import LoginManufacturerForm from './components/LoginManufacturerForm';
 import ResetPasswordManufacturerForm from './components/ResetPasswordManufacturerForm';
-import ProductRetailerCatalog from './components/ProductRetailerCatalog';
 import RoutingMap from './components/RoutingMap';
 import heroIllustration from './assets/heroIllustration.png';
 import manufacturerIllustration from './assets/Illustration2.png';
-import DesignManagerRetailer from './components/DesignManagerRetailer';
+import RetailerDashboard from './components/RetailerDashboard';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -198,8 +197,7 @@ function App() {
             )}
 
             {user?.role === 'retailer' && (
-                <div>
-                    <h1 className="text-2xl font-bold text-olive-900 mb-6 text-center">Product Catalog</h1>
+                <div className="font-playfair max-w-5xl mx-auto">
                     
                     <button 
                         onClick={simulateBulkOrder}
@@ -209,9 +207,9 @@ function App() {
                     </button>
                     
                     {logistics && <RoutingMap logistics={logistics} />}
-                    <ProductRetailerCatalog />
 
-                    <DesignManagerRetailer />
+                    <RetailerDashboard />
+
                 </div>
             )}
 

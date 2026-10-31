@@ -80,6 +80,8 @@ app.post('/api/manufacturer/queue', verifyRole('manufacturer'), (req, res) => {
 // --- FEATURE 2: Retailer Design Management ---
 const designRoutes = require('./routes/designRoutes');
 app.use('/api/designs', designRoutes(verifyRole, upload));
+const retailerSettingsRoutes = require('./routes/retailerSettingsRoutes');
+app.use('/api/retailer-settings', retailerSettingsRoutes(verifyRole));
 
 // --- FEATURE 3: Dynamic Pricing Catalog ---
 app.get('/api/products', async (req, res) => {
