@@ -1,3 +1,7 @@
+const amqp = require('amqplib');
+const Trend = require('./models/Trend');
+const Redis = require('ioredis');
+const cacheClient = new Redis({ host: process.env.REDIS_HOST || '127.0.0.1', port: 6379 });
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -144,6 +148,70 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
         res.status(500).json({ error: error.message });
     } finally {
         if (lock) await lock.release().catch(err => console.error(err));
+    }
+});
+
+// --- FEATURE 5: RabbitMQ & Redis Caching ---
+
+let channel, connection;
+async function connectQueue() {
+    try {
+        // Connects to the Docker container named 'rabbitmq'
+        connection = await amqp.connect('amqp://rabbitmq');
+        channel = await connection.createChannel();
+        await channel.assertQueue('ai_trend_dump', { durable: true });
+        
+        // Consumer: Listens to the queue and writes to MongoDB asynchronously
+        channel.consume('ai_trend_dump', async (msg) => {
+            if (msg !== null) {
+                const payload = JSON.parse(msg.content.toString());
+                try {
+                    await Trend.insertMany(payload); // Bulk insert Abhik's scraped data
+                    await cacheClient.del('trends_cache'); // Invalidate old Redis cache
+                    channel.ack(msg); // Acknowledge successful processing
+                } catch (err) {
+                    console.error('Failed to process AI dump:', err);
+                    // Do not ack, so RabbitMQ requeues it
+                }
+            }
+        });
+        console.log('Connected to RabbitMQ & Consumer Active');
+    } catch (error) {
+        console.error('RabbitMQ Connection Error:', error);
+    }
+}
+connectQueue();
+
+// Boundary Logic: The POST route Abhik hits. It DOES NOT touch the database directly.
+app.post('/api/trends/dump', async (req, res) => {
+    try {
+        const data = req.body; // Array of scraped JSON objects
+        // Push payload to RabbitMQ to prevent Node.js thread blocking
+        channel.sendToQueue('ai_trend_dump', Buffer.from(JSON.stringify(data)), { persistent: true });
+        res.status(202).json({ message: "Data accepted into queue for asynchronous processing." });
+    } catch (error) {
+        res.status(500).json({ error: "Message Queue overload" });
+    }
+});
+
+// Fast Retrieval: Fetches trends in < 2ms using Redis RAM
+app.get('/api/trends', async (req, res) => {
+    try {
+        // 1. Check Redis Cache First
+        const cachedTrends = await cacheClient.get('trends_cache');
+        if (cachedTrends) {
+            return res.status(200).json({ source: 'Redis RAM', data: JSON.parse(cachedTrends) });
+        }
+
+        // 2. Cache Miss: Query MongoDB
+        const dbTrends = await Trend.find().sort({ volume: -1 }).limit(100);
+        
+        // 3. Store in Redis for future requests (Expires in 1 hour)
+        await cacheClient.set('trends_cache', JSON.stringify(dbTrends), 'EX', 3600);
+        
+        res.status(200).json({ source: 'MongoDB', data: dbTrends });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

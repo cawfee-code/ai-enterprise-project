@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  frontend:
+    build: ./global-frontend
+    container_name: platform-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  backend:
+    build: ./retailer-mfg-backend
+    container_name: platform-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+      - rabbitmq
+
+  redis:
+    image: redis:alpine
+    container_name: platform-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: platform-rabbitmq
+    ports:
+      - "5672:5672"   # Main AMQP port
+      - "15672:15672" # UI Dashboard

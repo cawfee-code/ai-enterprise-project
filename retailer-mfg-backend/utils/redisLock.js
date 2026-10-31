@@ -2,7 +2,7 @@ const Redis = require('ioredis');
 // Extract the default class from the latest redlock package
 const { default: Redlock } = require('redlock');
 
-const redisClient = new Redis({ host: '127.0.0.1', port: 6379 });
+const redisClient = new Redis({ host: process.env.REDIS_HOST || '127.0.0.1', port: 6379 });
 
 const redlock = new Redlock(
     [redisClient],

@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:5000', // Changed to explicit IPv4
+        target: 'http://backend:5000', // Changed to explicit IPv4
         changeOrigin: true,
         secure: false,
       }
