@@ -1,3 +1,4 @@
+const multer = require('multer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const express = require('express');
@@ -18,6 +19,14 @@ const determineRoute = require('./utils/routingMachine');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/designs'),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
+const upload = multer({ storage });
+
+app.use('/uploads', express.static('uploads'));
 
 const dbURI = 'mongodb+srv://watanashi_db_user:ID0oAxFLA49JWNPD@cluster0.qan7boh.mongodb.net/'
 mongoose.connect(dbURI)
@@ -54,30 +63,8 @@ app.post('/api/manufacturer/queue', verifyRole('manufacturer'), (req, res) => {
 });
 
 // --- FEATURE 3: Dynamic Pricing Catalog ---
-app.get('/api/products', async (req, res) => {
-    const products = await Product.find();
-    res.json(products);
-});
-
-app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
-    try {
-        const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
-        
-        const pricingData = calculateDynamicPricing({
-            baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions
-        });
-
-        const newProduct = new Product({
-            manufacturerId: req.user.userId, name, description, baseManufacturingCost, 
-            targetMarginPercentage, physicalWeightKg, dimensions, price: pricingData.finalPrice, stockCount
-        });
-        
-        await newProduct.save();
-        res.status(201).json({ message: "Product added to catalog!", engineMetrics: pricingData, product: newProduct });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes(verifyRole, upload));
 
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
