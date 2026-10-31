@@ -100,6 +100,7 @@ const DesignManagerRetailer = () => {
     };
 
     const handleDelete = async (id) => {
+        if (!window.confirm('Delete this design? This can\'t be undone.')) return;
         try {
             await deleteDesign(id, user.token);
             loadDesigns();

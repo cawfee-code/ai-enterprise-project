@@ -20,13 +20,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const crypto = require('crypto');
+const path = require('path');
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/designs'),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`);
+    }
 });
+
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
     fileFilter: (req, file, cb) => {
         const allowed = ['image/jpeg', 'image/png', 'image/svg+xml', 'application/pdf'];
         if (allowed.includes(file.mimetype)) cb(null, true);
