@@ -24,7 +24,6 @@ export async function login({ email, password }) {
     return data;
 }
 
-// Note: You still need to build the /users/reset-password endpoint on the backend
 export async function resetPassword({ email, newPassword }) {
     const res = await fetch(`${API_BASE}/users/reset-password`, {
         method: 'POST',

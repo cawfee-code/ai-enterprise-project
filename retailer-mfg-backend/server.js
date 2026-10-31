@@ -24,7 +24,15 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/designs'),
     filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/svg+xml', 'application/pdf'];
+        if (allowed.includes(file.mimetype)) cb(null, true);
+        else cb(new Error('Invalid file type. Only JPG, PNG, SVG, or PDF allowed.'));
+    }
+});
 
 app.use('/uploads', express.static('uploads'));
 
@@ -62,9 +70,35 @@ app.post('/api/manufacturer/queue', verifyRole('manufacturer'), (req, res) => {
     res.json({ message: "Access Granted: Welcome to the Manufacturer Production Queue!" });
 });
 
+// --- FEATURE 2: Retailer Design Management ---
+const designRoutes = require('./routes/designRoutes');
+app.use('/api/designs', designRoutes(verifyRole, upload));
+
 // --- FEATURE 3: Dynamic Pricing Catalog ---
-const productRoutes = require('./routes/productRoutes');
-app.use('/api/products', productRoutes(verifyRole, upload));
+app.get('/api/products', async (req, res) => {
+    const products = await Product.find();
+    res.json(products);
+});
+
+app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
+    try {
+        const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
+        
+        const pricingData = calculateDynamicPricing({
+            baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions
+        });
+
+        const newProduct = new Product({
+            manufacturerId: req.user.userId, name, description, baseManufacturingCost, 
+            targetMarginPercentage, physicalWeightKg, dimensions, price: pricingData.finalPrice, stockCount
+        });
+        
+        await newProduct.save();
+        res.status(201).json({ message: "Product added to catalog!", engineMetrics: pricingData, product: newProduct });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
 
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {

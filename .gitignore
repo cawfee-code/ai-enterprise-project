@@ -1,3 +1,5 @@
 node_modules/
 .env
 __pycache__/
+retailer-mfg-backend/uploads/designs/*
+!retailer-mfg-backend/uploads/designs/.gitkeep

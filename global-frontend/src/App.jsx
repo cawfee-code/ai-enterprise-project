@@ -11,6 +11,7 @@ import ProductRetailerCatalog from './components/ProductRetailerCatalog';
 import RoutingMap from './components/RoutingMap';
 import heroIllustration from './assets/heroIllustration.png';
 import manufacturerIllustration from './assets/Illustration2.png';
+import DesignManagerRetailer from './components/DesignManagerRetailer';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -209,6 +210,8 @@ function App() {
                     
                     {logistics && <RoutingMap logistics={logistics} />}
                     <ProductRetailerCatalog />
+
+                    <DesignManagerRetailer />
                 </div>
             )}
 
