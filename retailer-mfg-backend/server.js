@@ -46,32 +46,8 @@ const verifyRole = (requiredRole) => {
 };
 
 // --- FEATURE 1: Authentication ---
-app.post('/api/users/register', async (req, res) => {
-    try {
-        const { email, password, role } = req.body;
-        const newUser = new User({ email, password, role });
-        await newUser.save();
-        res.status(201).json({ message: "User securely registered!", userId: newUser._id });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.post('/api/users/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
-
-        const token = jwt.sign({ userId: user._id, role: user.role }, 'mySuperSecretKey', { expiresIn: '1h' });
-        res.json({ message: "Login successful", token });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+const userAuthRoutes = require('./routes/userAuthRoutes');
+app.use('/api/users', userAuthRoutes);
 
 app.post('/api/manufacturer/queue', verifyRole('manufacturer'), (req, res) => {
     res.json({ message: "Access Granted: Welcome to the Manufacturer Production Queue!" });
