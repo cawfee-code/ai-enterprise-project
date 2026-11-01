@@ -3,3 +3,4 @@ node_modules/
 __pycache__/
 retailer-mfg-backend/uploads/designs/*
 !retailer-mfg-backend/uploads/designs/.gitkeep
+nlp-engine/BERT/model.safetensors
