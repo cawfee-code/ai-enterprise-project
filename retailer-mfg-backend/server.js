@@ -117,6 +117,10 @@ app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
     }
 });
 
+// --- FEATURE 5 (Retailer): Trend cache/database API for Retailer UI ---
+const retailerTrendsRoutes = require('./routes/retailerTrendsRoutes');
+app.use('/api/retailer-trends', retailerTrendsRoutes(verifyRole, cacheClient));
+
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
     const { productId, quantity, customerAddress } = req.body;

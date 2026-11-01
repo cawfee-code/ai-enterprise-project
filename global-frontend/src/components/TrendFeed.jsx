@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { AuthContext } from '../context/AuthContext';
 
 const COLORS = { Positive: '#84cc16', Neutral: '#9ca3af', Negative: '#ef4444' };
 
 const TrendFeed = () => {
+    const { user } = useContext(AuthContext);
     const [trends, setTrends] = useState([]);
 
     useEffect(() => {
-        fetch('/api/trends')
+        fetch('/api/retailer-trends', {
+            headers: { Authorization: `Bearer ${user?.token}` }
+        })
             .then(res => res.json())
             .then(data => setTrends(data.data || []))
             .catch(err => console.error(err));
-    }, []);
+    }, [user?.token]);
 
     // Aggregate NLP data for the Pie Chart weighted by market volume
     const sentimentCounts = trends.reduce((acc, trend) => {
