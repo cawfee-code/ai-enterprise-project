@@ -31,3 +31,11 @@ services:
     ports:
       - "5672:5672"   # Main AMQP port
       - "15672:15672" # UI Dashboard
+  
+  nlp-engine:
+    build: ./nlp-engine
+    container_name: platform-nlp
+    ports:
+      - "8000:8000"
+    depends_on:
+      - backend

@@ -11,6 +11,7 @@ import RoutingMap from './components/RoutingMap';
 import heroIllustration from './assets/heroIllustration.png';
 import manufacturerIllustration from './assets/Illustration2.png';
 import RetailerDashboard from './components/RetailerDashboard';
+import TrendFeed from './components/TrendFeed';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -199,6 +200,9 @@ function App() {
             {user?.role === 'retailer' && (
                 <div className="font-playfair max-w-5xl mx-auto">
                     
+                    {/* Trend Feed is now securely inside the Retailer Dashboard */}
+                    <TrendFeed/>
+
                     <button 
                         onClick={simulateBulkOrder}
                         className="mb-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"

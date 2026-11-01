@@ -215,6 +215,34 @@ app.get('/api/trends', async (req, res) => {
     }
 });
 
+// --- FEATURE 6: NLP Sentiment Update Webhook & Cache Invalidation ---
+app.put('/api/trends/sentiment/:id', async (req, res) => {
+    try {
+        const { sentimentScore, confidence, extractedItem } = req.body;
+        
+        const updatedTrend = await Trend.findByIdAndUpdate(
+            req.params.id, 
+            { 
+                extractedItem: extractedItem,
+                sentiment: { 
+                    score: sentimentScore, 
+                    confidence: confidence 
+                } 
+            }, 
+            { new: true }
+        );
+
+        if (!updatedTrend) {
+            return res.status(404).json({ error: "Trend record not found." });
+        }
+
+        await cacheClient.del('trends_cache');
+        res.status(200).json({ message: "Sentiment and Product Signal appended.", trend: updatedTrend });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to process NLP payload." });
+    }
+});
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
