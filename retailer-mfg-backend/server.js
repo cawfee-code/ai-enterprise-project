@@ -315,6 +315,86 @@ app.post('/api/internal/simulate-data', async (req, res) => {
     }
 });
 
+// --- FEATURE 8: Executive Decision Dashboard (Data Aggregator) ---
+app.get('/api/dashboard/summary', verifyRole('manufacturer'), async (req, res) => {
+    try {
+        // 1. Sales Aggregation Pipeline ($match, $lookup, $group, $project)
+        // Crunches raw transactional order records into grouped daily revenue summaries.
+        const salesData = await Order.aggregate([
+            { 
+                $match: { status: { $ne: 'cancelled' } } 
+            },
+            {
+                // Join the Product collection to access dynamic pricing for revenue math
+                $lookup: {
+                    from: 'products', 
+                    localField: 'productId',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    dailyRevenue: { $sum: { $multiply: ["$quantity", "$productInfo.price"] } },
+                    ordersCount: { $sum: 1 },
+                    unitsMoved: { $sum: "$quantity" }
+                }
+            },
+            { $sort: { _id: 1 } },
+            {
+                $project: {
+                    date: "$_id",
+                    dailyRevenue: 1,
+                    ordersCount: 1,
+                    unitsMoved: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        // 2. Customer Segment Distribution
+        // Compiles the current K-Means clustering totals (VIPs, Regulars, Churn Risks)
+        const customerClusters = await User.aggregate([
+            { $match: { role: 'retailer' } },
+            { 
+                $group: { 
+                    _id: "$aiCluster.segmentName", 
+                    count: { $sum: 1 } 
+                } 
+            },
+            {
+                $project: {
+                    segment: "$_id",
+                    count: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        // 3. Market Sentiment & Signals
+        // Pulls the top 5 highest-volume trends scored by the Python BERT engine
+        const topTrends = await Trend.find()
+            .sort({ volume: -1 })
+            .limit(5)
+            .select('hashtag volume sentiment extractedItem -_id');
+
+        // 4. Compile Optimized JSON Payload
+        res.status(200).json({
+            message: "Executive Data Aggregation Complete",
+            dashboard: {
+                salesTimeline: salesData,
+                audienceSegments: customerClusters,
+                marketSignals: topTrends
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: "Failed to aggregate dashboard metrics: " + error.message });
+    }
+});
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
