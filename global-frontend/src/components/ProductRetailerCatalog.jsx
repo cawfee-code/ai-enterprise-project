@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { fetchProducts } from '../api/productRetailerApi';
 import useCartStore from '../store/useCartStore';
 
+const getInitials = (name) => {
+    if (!name) return '--';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+};
+
 const ProductRetailerCatalog = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,18 +26,18 @@ const ProductRetailerCatalog = () => {
     return (
         <div>
             <div className="mb-8">
-                <h2 className="text-3xl font-semibold text-olive-900">Product Catalog</h2>
-                <p className="text-sm text-gray-500 mt-1">Stock from your connected manufacturers, ready to order</p>
+                <h2 className="text-2xl font-semibold text-ink-900">Product Catalog</h2>
+                <p className="text-sm text-muted mt-1">Browse available inventory from manufacturers and add items to your cart.</p>
             </div>
 
-            {loading && <p className="text-sm text-gray-500">Loading products...</p>}
+            {loading && <p className="text-sm text-muted">Loading products...</p>}
             {error && <p className="text-sm text-red-600">{error}</p>}
             {!loading && !error && products.length === 0 && (
-                <p className="text-sm text-gray-500">No products available yet.</p>
+                <p className="text-sm text-muted">No products available yet.</p>
             )}
 
             {!loading && !error && products.length > 0 && (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {products.map((product) => {
                         const inCart = cart.find((item) => item.productId === product._id)?.quantity || 0;
                         const remaining = product.stockCount - inCart;
@@ -39,30 +46,31 @@ const ProductRetailerCatalog = () => {
                         return (
                             <div
                                 key={product._id}
-                                className="bg-white rounded-2xl border border-sage-200 overflow-hidden flex flex-col transition hover:-translate-y-0.5 hover:shadow-md"
+                                className="bg-white rounded-xl border border-hairline p-4 flex flex-col transition hover:-translate-y-0.5 hover:shadow-md"
                             >
-                                <div className="px-5 pt-5">
-                                    <h3 className="font-semibold text-olive-900 text-lg">{product.name}</h3>
-                                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
-                                </div>
-
-                                <div className="px-5 mt-4 flex items-center justify-between">
-                                    <span className="text-2xl font-semibold text-olive-900">
-                                        ${product.price?.toFixed(2)}
-                                    </span>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="w-12 h-12 rounded-lg bg-[#eef3e6] text-[#3c5a44] flex items-center justify-center font-bold text-sm">
+                                        {getInitials(product.name)}
+                                    </div>
                                     {lowStock && (
-                                        <span className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-                                            Only {remaining} left
+                                        <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">
+                                            Low stock · {remaining} left
                                         </span>
                                     )}
                                     {remaining <= 0 && (
-                                        <span className="text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+                                        <span className="text-[11px] font-medium text-muted bg-[#f1f3ec] rounded-full px-2.5 py-0.5">
                                             Out of stock
                                         </span>
                                     )}
                                 </div>
 
-                                <div className="p-5 mt-auto">
+                                <h3 className="font-semibold text-ink-900 text-[15px]">{product.name}</h3>
+                                <p className="text-xs text-muted mt-1 mb-4 line-clamp-2 flex-grow">{product.description}</p>
+
+                                <div className="flex items-center justify-between">
+                                    <span className="text-lg font-bold text-ink-900">
+                                        ${product.price?.toFixed(2)}
+                                    </span>
                                     <button
                                         onClick={() =>
                                             addToCart({
@@ -73,9 +81,9 @@ const ProductRetailerCatalog = () => {
                                             })
                                         }
                                         disabled={remaining <= 0}
-                                        className="w-full bg-olive-900 hover:opacity-90 text-lime-400 font-medium rounded-lg py-2.5 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                        className="bg-ink-900 hover:opacity-90 text-accent-lime font-semibold text-xs rounded-lg px-4 py-2 transition disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        {remaining <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                                        {remaining <= 0 ? 'Out of Stock' : 'Add to cart'}
                                     </button>
                                 </div>
                             </div>

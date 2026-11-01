@@ -1,64 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-sage-100: #e7efe0;
-  --color-sage-200: #d7e4ca;
-  --color-olive-900: #2f3b24;
-  --color-lime-400: #d9f99d;
-  --color-lime-500: #c7f264;
+  /* existing tokens stay — sage-100, sage-200, olive-900, lime-400, lime-500, etc. */
 
-  --font-playfair: "Playfair Display", ui-serif, Georgia, serif;
+  /* new: exact palette from the design reference */
+  --color-forest-900: #102720;
+  --color-ink-900: #122b25;
+  --color-accent-lime: #d8ff5d;
+  --color-paper: #f4f4eb;
+  --color-muted: #718178;
+  --color-hairline: #d8ded5;
+  --color-accent-violet: #d8caf4;
+  --color-plum-900: #1b1830;
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
 
-@keyframes spinGradient {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animated-gradient-bg {
-  position: relative;
-  overflow: hidden;
-}
-
-.animated-gradient-bg::before {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(from 0deg, #e7efe0, #d7e4ca, #d9f99d, #d7e4ca, #e7efe0);
-  animation: spinGradient 20s linear infinite;
-  z-index: -1;
-}
-
-.animated-gradient-bg-purple {
-  position: relative;
-  overflow: hidden;
-}
-
-.animated-gradient-bg-purple::before {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(from 0deg, #f3e8ff, #e9d5ff, #d8b4fe, #e9d5ff, #f3e8ff);
-  animation: spinGradient 20s linear infinite;
-  z-index: -1;
-}
-
-.animated-gradient-bg-mixed {
-  position: relative;
-  overflow: hidden;
-}
-
-.animated-gradient-bg-mixed::before {
-  content: '';
-  position: absolute;
-  inset: -50%;
-  background: conic-gradient(from 0deg, #e7efe0, #e9d5ff, #d9f99d, #d8b4fe, #e7efe0);
-  animation: spinGradient 20s linear infinite;
-  z-index: -1;
-}
-
-.fade-edges {
-  -webkit-mask-image: radial-gradient(ellipse at center, black 55%, transparent 85%);
-  mask-image: radial-gradient(ellipse at center, black 55%, transparent 85%);
-}

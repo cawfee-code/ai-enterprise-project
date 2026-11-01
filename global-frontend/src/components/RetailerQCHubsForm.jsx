@@ -83,18 +83,18 @@ const RetailerQCHubsForm = () => {
 
     const renderForm = () => (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <label className="text-sm font-medium text-olive-900 mb-1">Address</label>
+            <label className="text-sm font-medium text-ink-900 mb-1">Address</label>
             <input
                 type="text"
                 placeholder="e.g. 221 Harbor Rd, New York, NY"
                 value={form.addressString}
                 onChange={(e) => setForm({ ...form, addressString: e.target.value })}
                 required
-                className="mb-3 rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
+                className="mb-3 rounded-lg border border-hairline px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
             />
             <div className="grid grid-cols-2 gap-2 mb-3">
                 <div>
-                    <label className="text-sm font-medium text-olive-900 mb-1 block">Latitude</label>
+                    <label className="text-sm font-medium text-ink-900 mb-1 block">Latitude</label>
                     <input
                         type="number"
                         step="any"
@@ -104,11 +104,11 @@ const RetailerQCHubsForm = () => {
                         value={form.latitude}
                         onChange={(e) => setForm({ ...form, latitude: e.target.value })}
                         required
-                        className="w-full rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
+                        className="w-full rounded-lg border border-hairline px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
                     />
                 </div>
                 <div>
-                    <label className="text-sm font-medium text-olive-900 mb-1 block">Longitude</label>
+                    <label className="text-sm font-medium text-ink-900 mb-1 block">Longitude</label>
                     <input
                         type="number"
                         step="any"
@@ -118,7 +118,7 @@ const RetailerQCHubsForm = () => {
                         value={form.longitude}
                         onChange={(e) => setForm({ ...form, longitude: e.target.value })}
                         required
-                        className="w-full rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
+                        className="w-full rounded-lg border border-hairline px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
                     />
                 </div>
             </div>
@@ -126,14 +126,14 @@ const RetailerQCHubsForm = () => {
                 <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 bg-lime-400 hover:bg-lime-500 text-olive-900 font-semibold rounded-lg py-1.5 text-sm transition disabled:opacity-60"
+                    className="flex-1 bg-accent-lime hover:brightness-95 text-ink-900 font-semibold rounded-lg py-1.5 text-sm transition disabled:opacity-60"
                 >
                     {submitting ? 'Saving…' : editingId ? 'Save changes' : 'Add QC hub'}
                 </button>
                 <button
                     type="button"
                     onClick={cancelForm}
-                    className="px-3 rounded-lg border border-sage-200 text-sm text-olive-900"
+                    className="px-3 rounded-lg border border-hairline text-sm text-ink-900"
                 >
                     Cancel
                 </button>
@@ -144,11 +144,11 @@ const RetailerQCHubsForm = () => {
     return (
         <div>
             <div className="flex items-baseline justify-between mb-1">
-                <h2 className="text-xl font-bold text-olive-900">Quality Control Hub Addresses</h2>
-                <span className="text-sm text-gray-400">{hubs.length} saved</span>
+                <h2 className="text-2xl font-semibold text-ink-900">QC Hubs</h2>
+                <span className="text-sm text-muted">{hubs.length} saved</span>
             </div>
-            <p className="text-sm text-gray-500 mb-5">
-                Where bulk orders get routed for QC before reaching customers.
+            <p className="text-sm text-muted mb-6">
+                Quality control hub addresses your shipments route through before reaching you.
             </p>
 
             {error && (
@@ -158,13 +158,13 @@ const RetailerQCHubsForm = () => {
             )}
 
             {loading ? (
-                <p className="text-sm text-gray-500">Loading your QC hubs…</p>
+                <p className="text-sm text-muted">Loading your QC hubs…</p>
             ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {!adding && (
                         <button
                             onClick={startAdd}
-                            className="border-2 border-dashed border-sage-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-lime-400 hover:text-olive-900 transition min-h-[200px]"
+                            className="border-2 border-dashed border-hairline rounded-xl p-5 flex flex-col items-center justify-center gap-2 text-muted hover:border-accent-lime hover:text-ink-900 transition min-h-[160px] bg-[#eceee5]"
                         >
                             <span className="text-3xl leading-none">+</span>
                             <span className="text-sm font-medium">Add a QC hub</span>
@@ -172,26 +172,26 @@ const RetailerQCHubsForm = () => {
                     )}
 
                     {adding && (
-                        <div className="bg-white rounded-2xl border border-lime-400 p-5 min-h-[200px]">
+                        <div className="bg-white rounded-xl border border-hairline p-5 min-h-[160px]">
                             {renderForm()}
                         </div>
                     )}
 
                     {hubs.map((hub) =>
                         editingId === hub._id ? (
-                            <div key={hub._id} className="bg-white rounded-2xl border border-lime-400 p-5 min-h-[200px]">
+                            <div key={hub._id} className="bg-white rounded-xl border border-hairline p-5 min-h-[160px]">
                                 {renderForm()}
                             </div>
                         ) : (
-                            <div key={hub._id} className="bg-white rounded-2xl border border-sage-200 shadow-sm p-5 flex flex-col">
-                                <h3 className="font-semibold text-olive-900 mb-1">{hub.addressString}</h3>
-                                <p className="text-xs text-gray-400 mb-4">
+                            <div key={hub._id} className="bg-white rounded-xl border border-hairline p-5 flex flex-col">
+                                <h3 className="font-semibold text-ink-900 mb-1 text-[15px]">{hub.addressString}</h3>
+                                <p className="text-xs text-muted mb-4">
                                     {hub.location.coordinates[1].toFixed(4)}, {hub.location.coordinates[0].toFixed(4)}
                                 </p>
                                 <div className="flex gap-2 mt-auto">
                                     <button
                                         onClick={() => startEdit(hub)}
-                                        className="flex-1 text-sm border border-sage-200 text-olive-900 rounded-lg py-1.5 hover:bg-gray-50 transition"
+                                        className="flex-1 text-sm border border-hairline text-ink-900 rounded-lg py-1.5 hover:bg-gray-50 transition"
                                     >
                                         Edit
                                     </button>

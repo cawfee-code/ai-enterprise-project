@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { fetchRetailerSettings, saveRetailerSettings, deleteRetailerSettings } from '../api/retailerSettingsApi';
 
-
 const RetailerSettingsForm = () => {
     const { user } = useContext(AuthContext);
     const [value, setValue] = useState('');
@@ -11,7 +10,6 @@ const RetailerSettingsForm = () => {
     const [error, setError] = useState('');
     const [resetting, setResetting] = useState(false);
     const [savedMessage, setSavedMessage] = useState('');
-
 
     useEffect(() => {
         fetchRetailerSettings(user.token)
@@ -62,18 +60,26 @@ const RetailerSettingsForm = () => {
 
     return (
         <div>
-            <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-olive-900">Pricing Settings</h2>
-                <p className="text-sm text-gray-500 mt-1">Set the profit margin you target on top of wholesale pricing</p>
+            <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-ink-900">Pricing Settings</h2>
+                <p className="text-sm text-muted mt-1">Set the profit margin you target on top of wholesale pricing.</p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-sage-200 shadow-sm p-6 max-w-md mx-auto">
+            <div className="bg-white rounded-xl border border-hairline p-7 max-w-md">
                 {loading ? (
-                    <p className="text-sm text-gray-500">Loading your settings…</p>
+                    <p className="text-sm text-muted">Loading your settings…</p>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        <label className="text-sm font-medium text-olive-900 mb-1 block">
-                            Target profit percentage
+                        {value && (
+                            <>
+                                <p className="text-xs text-muted">Current target</p>
+                                <p className="text-[42px] font-bold text-ink-900 leading-none mt-1 mb-5">{value}%</p>
+                                <div className="h-px bg-hairline mb-5" />
+                            </>
+                        )}
+
+                        <label className="text-sm font-medium text-ink-900 mb-1 block">
+                            Update target profit percentage
                         </label>
                         <div className="flex items-center gap-2 mb-3">
                             <input
@@ -85,9 +91,9 @@ const RetailerSettingsForm = () => {
                                 onChange={(e) => setValue(e.target.value)}
                                 placeholder="e.g. 25"
                                 required
-                                className="flex-1 rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
+                                className="flex-1 rounded-lg border border-hairline px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
                             />
-                            <span className="text-sm text-gray-500">%</span>
+                            <span className="text-sm text-muted">%</span>
                         </div>
 
                         {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
@@ -97,7 +103,7 @@ const RetailerSettingsForm = () => {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="flex-1 bg-lime-400 hover:bg-lime-500 text-olive-900 font-semibold rounded-lg py-2 text-sm transition disabled:opacity-60"
+                                className="flex-1 bg-ink-900 hover:opacity-90 text-accent-lime font-semibold rounded-lg py-2.5 text-sm transition disabled:opacity-60"
                             >
                                 {saving ? 'Saving…' : 'Save'}
                             </button>
@@ -105,7 +111,7 @@ const RetailerSettingsForm = () => {
                                 type="button"
                                 onClick={handleReset}
                                 disabled={resetting || !value}
-                                className="px-4 rounded-lg border border-sage-200 text-sm text-olive-900 hover:bg-gray-50 transition disabled:opacity-40"
+                                className="px-4 rounded-lg border border-hairline text-sm text-ink-900 hover:bg-gray-50 transition disabled:opacity-40"
                             >
                                 {resetting ? 'Resetting…' : 'Reset'}
                             </button>

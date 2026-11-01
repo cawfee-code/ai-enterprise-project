@@ -5,6 +5,7 @@ import { isValidEmail, getPasswordError } from '../utils/validation';
 const RegisterManufacturerForm = ({ onSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -21,6 +22,10 @@ const RegisterManufacturerForm = ({ onSuccess }) => {
             setError(passwordError);
             return;
         }
+        if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -34,8 +39,9 @@ const RegisterManufacturerForm = ({ onSuccess }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl border border-purple-200 p-8 max-w-md mx-auto">
-            <h2 className="text-2xl font-bold text-purple-900 mb-6 text-center">Create Manufacturer Account</h2>
+        <form onSubmit={handleSubmit}>
+            <h2 className="text-2xl font-semibold text-ink-900 mb-1">Create your account</h2>
+            <p className="text-sm text-muted mb-6">Join as a manufacturer</p>
 
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
@@ -44,36 +50,47 @@ const RegisterManufacturerForm = ({ onSuccess }) => {
             )}
 
             <label className="block mb-4">
-                <span className="text-sm font-medium text-purple-900">Email</span>
+                <span className="text-sm font-medium text-ink-900">Email</span>
                 <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="mt-1 w-full rounded-lg border border-purple-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    className="mt-1.5 w-full rounded-lg border border-hairline px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-violet"
                 />
             </label>
 
-            <label className="block mb-2">
-                <span className="text-sm font-medium text-purple-900">Password</span>
+            <label className="block mb-4">
+                <span className="text-sm font-medium text-ink-900">Password</span>
                 <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="mt-1 w-full rounded-lg border border-purple-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    className="mt-1.5 w-full rounded-lg border border-hairline px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-violet"
                 />
             </label>
-            <p className="text-xs text-purple-300 mb-6">
+
+            <label className="block mb-2">
+                <span className="text-sm font-medium text-ink-900">Confirm password</span>
+                <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="mt-1.5 w-full rounded-lg border border-hairline px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-violet"
+                />
+            </label>
+            <p className="text-xs text-muted mb-6">
                 At least 8 characters, with an uppercase letter, a lowercase letter, and a number.
             </p>
 
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg py-2.5 transition disabled:opacity-60"
+                className="w-full bg-ink-900 hover:opacity-90 text-accent-violet font-semibold rounded-lg py-3 text-sm transition disabled:opacity-60"
             >
-                {loading ? 'Creating account...' : 'Register as Manufacturer'}
+                {loading ? 'Creating account...' : 'Create account ↗'}
             </button>
         </form>
     );

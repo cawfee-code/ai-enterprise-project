@@ -11,31 +11,44 @@ const TABS = [
     { id: 'hubs', label: 'QC Hubs' },
 ];
 
-const RetailerDashboard = () => {
+const RetailerDashboard = ({ onSimulateBulkOrder }) => {
     const [activeTab, setActiveTab] = useState('catalog');
 
     return (
-        <div className="font-playfair max-w-5xl mx-auto">
-            <div className="flex gap-1 border-b border-sage-200 mb-8">
-                {TABS.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
-                            activeTab === tab.id
-                                ? 'border-olive-900 text-olive-900'
-                                : 'border-transparent text-gray-400 hover:text-olive-900'
-                        }`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
+        <div className="flex gap-6 items-start">
+            <div className="w-56 shrink-0 rounded-xl bg-[var(--color-forest-900)] p-4 sticky top-6">
+                <div className="flex flex-col gap-1">
+                    {onSimulateBulkOrder && (
+                        <button
+                            onClick={onSimulateBulkOrder}
+                            className="text-left px-3.5 py-2.5 rounded-lg text-sm text-[#a9bdb1] hover:text-white transition mb-1"
+                        >
+                            Simulate Bulk Order Placement
+                        </button>
+                    )}
+                    {TABS.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`text-left px-3.5 py-2.5 rounded-lg text-sm transition ${
+                                activeTab === tab.id
+                                    ? 'bg-[var(--color-accent-lime)] text-[var(--color-forest-900)] font-semibold'
+                                    : 'text-[#a9bdb1] hover:text-white'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="text-[11px] text-[#607a6c] px-3.5 pt-6">Retailer workspace</div>
             </div>
 
-            {activeTab === 'catalog' && <ProductRetailerCatalog />}
-            {activeTab === 'designs' && <DesignManagerRetailer />}
-            {activeTab === 'settings' && <RetailerSettingsForm />}
-            {activeTab === 'hubs' && <RetailerQCHubsForm />}
+            <div className="flex-1 min-w-0 bg-[var(--color-paper)] rounded-xl p-8">
+                {activeTab === 'catalog' && <ProductRetailerCatalog />}
+                {activeTab === 'designs' && <DesignManagerRetailer />}
+                {activeTab === 'settings' && <RetailerSettingsForm />}
+                {activeTab === 'hubs' && <RetailerQCHubsForm />}
+            </div>
         </div>
     );
 };
