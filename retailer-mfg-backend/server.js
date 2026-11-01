@@ -121,6 +121,10 @@ app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
 const retailerTrendsRoutes = require('./routes/retailerTrendsRoutes');
 app.use('/api/retailer-trends', retailerTrendsRoutes(verifyRole, cacheClient));
 
+// --- FEATURE 6 (Retailer): Scored sentiment aggregation API for Retailer UI ---
+const retailerSentimentRoutes = require('./routes/retailerSentimentRoutes');
+app.use('/api/retailer-sentiment', retailerSentimentRoutes(verifyRole));
+
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
     const { productId, quantity, customerAddress } = req.body;
