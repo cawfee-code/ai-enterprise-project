@@ -1,9 +1,9 @@
 import Navbar from './Navbar';
 
-const Layout = ({ children, onLoginAsRetailer, onLoginAsManufacturer, theme = 'retailer' }) => {
+const Layout = ({ children, onLoginAsRetailer, onLoginAsManufacturer, onGoHome, theme = 'retailer' }) => {
     return (
         <div className="min-h-screen bg-paper flex flex-col">
-            <Navbar onLoginAsRetailer={onLoginAsRetailer} onLoginAsManufacturer={onLoginAsManufacturer} />
+            <Navbar onLoginAsRetailer={onLoginAsRetailer} onLoginAsManufacturer={onLoginAsManufacturer} onGoHome={onGoHome} />
 
             <main className="flex-grow w-full px-4 sm:px-6 lg:px-10 py-8">
                 {children}

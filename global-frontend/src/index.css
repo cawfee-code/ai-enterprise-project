@@ -18,3 +18,9 @@
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
 }
 
+@layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+

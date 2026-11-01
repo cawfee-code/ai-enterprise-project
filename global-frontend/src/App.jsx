@@ -40,6 +40,7 @@ function App() {
             theme={bgTheme}
             onLoginAsRetailer={() => setPortalMode('retailer')}
             onLoginAsManufacturer={() => setPortalMode('manufacturer')}
+            onGoHome={() => setPortalMode(null)}
         >
             {!user && portalMode === null && (
                 <div>
@@ -145,9 +146,6 @@ function App() {
 
             {!user && portalMode === 'retailer' && (
                 <div>
-                    <button onClick={() => setPortalMode(null)} className="text-sm text-muted mb-6 underline">
-                        ← Back to home
-                    </button>
 
                     <div className="grid md:grid-cols-2 rounded-3xl overflow-hidden border border-hairline">
                         <div className="bg-forest-900 p-10 flex flex-col justify-between min-h-[420px] relative overflow-hidden">
@@ -226,9 +224,6 @@ function App() {
 
             {!user && portalMode === 'manufacturer' && (
                 <div>
-                    <button onClick={() => setPortalMode(null)} className="text-sm text-muted mb-6 underline">
-                        ← Back to home
-                    </button>
 
                     <div className="grid md:grid-cols-2 rounded-3xl overflow-hidden border border-hairline">
                         <div className="bg-plum-900 p-10 flex flex-col justify-between min-h-[420px] relative overflow-hidden">
