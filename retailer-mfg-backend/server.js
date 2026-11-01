@@ -125,6 +125,10 @@ app.use('/api/retailer-trends', retailerTrendsRoutes(verifyRole, cacheClient));
 const retailerSentimentRoutes = require('./routes/retailerSentimentRoutes');
 app.use('/api/retailer-sentiment', retailerSentimentRoutes(verifyRole));
 
+// --- FEATURE 7 (CRM slice): Manufacturer-scoped retailer customer table ---
+const manufacturerCustomersRoutes = require('./routes/manufacturerCustomersRoutes');
+app.use('/api/manufacturer-customers', manufacturerCustomersRoutes(verifyRole));
+
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
     const { productId, quantity, customerAddress } = req.body;
