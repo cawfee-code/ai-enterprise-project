@@ -247,6 +247,37 @@ app.put('/api/trends/sentiment/:id', async (req, res) => {
     }
 });
 
+// --- FEATURE 7: AI Customer Segmentation & Cursor Pagination ---
+app.get('/api/customers', verifyRole('retailer'), async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const cursor = req.query.cursor;
+        
+        let query = {};
+        
+        // High-speed index scan: only fetch documents after the last seen _id
+        if (cursor) {
+            query._id = { $gt: cursor };
+        }
+
+        // Sort by _id to maintain a predictable index traversal
+        const customers = await User.find(query)
+            .sort({ _id: 1 })
+            .limit(limit)
+            .select('-password'); // Secure the payload by stripping hashed passwords
+
+        // Determine the starting point for the next page
+        const nextCursor = customers.length === limit ? customers[customers.length - 1]._id : null;
+
+        res.status(200).json({
+            data: customers,
+            nextCursor: nextCursor
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to execute cursor pagination." });
+    }
+});
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

@@ -16,6 +16,28 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['retailer', 'manufacturer'], // Strict architectural constraint
         required: true
+    },
+    
+    // --- FEATURE 7: AI Customer Segmentation Fields ---
+    aiCluster: {
+        clusterId: { 
+            type: Number, 
+            default: null,
+            index: true // Indexed for faster querying and filtering by Priyanka's CRM tables
+        },
+        segmentName: { 
+            type: String, 
+            enum: ['VIP', 'Regular', 'Churn Risk', 'Unassigned'], 
+            default: 'Unassigned' 
+        },
+        totalSpent: {
+            type: Number,
+            default: 0
+        },
+        orderFrequency: {
+            type: Number,
+            default: 0
+        }
     }
 });
 
