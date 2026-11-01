@@ -3,12 +3,14 @@ import ProductRetailerCatalog from './ProductRetailerCatalog';
 import DesignManagerRetailer from './DesignManagerRetailer';
 import RetailerSettingsForm from './RetailerSettingsForm';
 import RetailerQCHubsForm from './RetailerQCHubsForm';
+import RetailerAnalyticsCard from './RetailerAnalyticsCard';
 
 const TABS = [
     { id: 'catalog', label: 'Product Catalog' },
     { id: 'designs', label: 'My Designs' },
     { id: 'settings', label: 'Pricing Settings' },
     { id: 'hubs', label: 'QC Hubs' },
+    { id: 'analytics', label: 'Order Analytics' },
 ];
 
 const RetailerDashboard = ({ onSimulateBulkOrder }) => {
@@ -48,6 +50,7 @@ const RetailerDashboard = ({ onSimulateBulkOrder }) => {
                 {activeTab === 'designs' && <DesignManagerRetailer />}
                 {activeTab === 'settings' && <RetailerSettingsForm />}
                 {activeTab === 'hubs' && <RetailerQCHubsForm />}
+                {activeTab === 'analytics' && <RetailerAnalyticsCard />}
             </div>
         </div>
     );
