@@ -141,6 +141,15 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
         product.stockCount -= quantity;
         await product.save();
 
+        // Increment the Retailer's metrics for the AI clustering engine
+        const orderValue = (product.price || product.baseManufacturingCost) * quantity;
+        await User.findByIdAndUpdate(req.user.userId, {
+            $inc: { 
+                'aiCluster.totalSpent': orderValue,
+                'aiCluster.orderFrequency': 1
+            }
+        });
+
         res.status(201).json({ 
             message: "Order processed safely!", 
             order: newOrder, 
@@ -156,26 +165,22 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
 });
 
 // --- FEATURE 5: RabbitMQ & Redis Caching ---
-
 let channel, connection;
 async function connectQueue() {
     try {
-        // Connects to the Docker container named 'rabbitmq'
         connection = await amqp.connect('amqp://rabbitmq');
         channel = await connection.createChannel();
         await channel.assertQueue('ai_trend_dump', { durable: true });
         
-        // Consumer: Listens to the queue and writes to MongoDB asynchronously
         channel.consume('ai_trend_dump', async (msg) => {
             if (msg !== null) {
                 const payload = JSON.parse(msg.content.toString());
                 try {
-                    await Trend.insertMany(payload); // Bulk insert Abhik's scraped data
-                    await cacheClient.del('trends_cache'); // Invalidate old Redis cache
-                    channel.ack(msg); // Acknowledge successful processing
+                    await Trend.insertMany(payload); 
+                    await cacheClient.del('trends_cache'); 
+                    channel.ack(msg); 
                 } catch (err) {
                     console.error('Failed to process AI dump:', err);
-                    // Do not ack, so RabbitMQ requeues it
                 }
             }
         });
@@ -186,11 +191,9 @@ async function connectQueue() {
 }
 connectQueue();
 
-// Boundary Logic: The POST route Abhik hits. It DOES NOT touch the database directly.
 app.post('/api/trends/dump', async (req, res) => {
     try {
-        const data = req.body; // Array of scraped JSON objects
-        // Push payload to RabbitMQ to prevent Node.js thread blocking
+        const data = req.body; 
         channel.sendToQueue('ai_trend_dump', Buffer.from(JSON.stringify(data)), { persistent: true });
         res.status(202).json({ message: "Data accepted into queue for asynchronous processing." });
     } catch (error) {
@@ -198,19 +201,14 @@ app.post('/api/trends/dump', async (req, res) => {
     }
 });
 
-// Fast Retrieval: Fetches trends in < 2ms using Redis RAM
 app.get('/api/trends', async (req, res) => {
     try {
-        // 1. Check Redis Cache First
         const cachedTrends = await cacheClient.get('trends_cache');
         if (cachedTrends) {
             return res.status(200).json({ source: 'Redis RAM', data: JSON.parse(cachedTrends) });
         }
 
-        // 2. Cache Miss: Query MongoDB
         const dbTrends = await Trend.find().sort({ volume: -1 }).limit(100);
-        
-        // 3. Store in Redis for future requests (Expires in 1 hour)
         await cacheClient.set('trends_cache', JSON.stringify(dbTrends), 'EX', 3600);
         
         res.status(200).json({ source: 'MongoDB', data: dbTrends });
@@ -248,25 +246,22 @@ app.put('/api/trends/sentiment/:id', async (req, res) => {
 });
 
 // --- FEATURE 7: AI Customer Segmentation & Cursor Pagination ---
-app.get('/api/customers', verifyRole('retailer'), async (req, res) => {
+app.get('/api/customers', verifyRole('manufacturer'), async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 50;
         const cursor = req.query.cursor;
         
         let query = {};
         
-        // High-speed index scan: only fetch documents after the last seen _id
         if (cursor) {
             query._id = { $gt: cursor };
         }
 
-        // Sort by _id to maintain a predictable index traversal
         const customers = await User.find(query)
             .sort({ _id: 1 })
             .limit(limit)
-            .select('-password'); // Secure the payload by stripping hashed passwords
+            .select('-password'); 
 
-        // Determine the starting point for the next page
         const nextCursor = customers.length === limit ? customers[customers.length - 1]._id : null;
 
         res.status(200).json({
@@ -275,6 +270,48 @@ app.get('/api/customers', verifyRole('retailer'), async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: "Failed to execute cursor pagination." });
+    }
+});
+
+app.put('/api/customers/:id/cluster', async (req, res) => {
+    try {
+        const { clusterId, segmentName } = req.body;
+        await User.findByIdAndUpdate(req.params.id, {
+            'aiCluster.clusterId': clusterId,
+            'aiCluster.segmentName': segmentName
+        });
+        res.status(200).send("Cluster updated");
+    } catch (error) {
+        res.status(500).send("Update failed");
+    }
+});
+
+app.get('/api/internal/customers', async (req, res) => {
+    try {
+        const customers = await User.find().select('-password');
+        res.status(200).json({ data: customers });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch internal data." });
+    }
+});
+
+// --- DEMO SIMULATOR: Generate mock order history for the AI ---
+app.post('/api/internal/simulate-data', async (req, res) => {
+    try {
+        const retailers = await User.find({ role: 'retailer' });
+        for (let retailer of retailers) {
+            const isVip = Math.random() > 0.6;
+            const spend = isVip ? Math.floor(Math.random() * 50000) + 10000 : Math.floor(Math.random() * 5000) + 100;
+            const freq = isVip ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 5) + 1;
+
+            await User.findByIdAndUpdate(retailer._id, {
+                'aiCluster.totalSpent': spend,
+                'aiCluster.orderFrequency': freq
+            });
+        }
+        res.status(200).json({ message: "Mock data generated successfully." });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to simulate data." });
     }
 });
 

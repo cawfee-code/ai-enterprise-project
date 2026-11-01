@@ -10,6 +10,7 @@ import ResetPasswordManufacturerForm from './components/ResetPasswordManufacture
 import RoutingMap from './components/RoutingMap';
 import RetailerDashboard from './components/RetailerDashboard';
 import TrendFeed from './components/TrendFeed';
+import CustomerSegmentation from './components/CustomerSegmentation';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -318,7 +319,7 @@ function App() {
                 </div>
             )}
 
-                        {user?.role === 'retailer' && (
+            {user?.role === 'retailer' && (
                 <div className="font-playfair max-w-5xl mx-auto">
                     
                     {/* Trend Feed is now securely inside the Retailer Dashboard */}
@@ -332,11 +333,17 @@ function App() {
             )}
 
             {user?.role === 'manufacturer' && (
-                <div className="bg-white rounded-3xl shadow-lg border border-sage-200 p-8 max-w-md mx-auto text-center">
-                    <h2 className="text-lg font-semibold text-olive-900 mb-2">Manufacturer Portal</h2>
-                    <p className="text-gray-500 text-sm">
-                        Dashboard not built yet — this is Shouvik & Rohon's scope.
-                    </p>
+                <div className="font-playfair max-w-5xl mx-auto p-4 md:p-8">
+                    
+                    {/* Feature 7: AI Customer Segmentation Visualizer */}
+                    <CustomerSegmentation />
+
+                    <div className="bg-white rounded-3xl shadow-lg border border-sage-200 p-8 mt-8 text-center">
+                        <h2 className="text-lg font-semibold text-olive-900 mb-2">Manufacturer Order Queue</h2>
+                        <p className="text-gray-500 text-sm">
+                            Fulfillment Dashboard not built yet — this is Shouvik & Rohon's scope.
+                        </p>
+                    </div>
                 </div>
             )}
         </Layout>

@@ -4,3 +4,4 @@ uvicorn
 transformers
 torch
 requests
+scikit-learn
