@@ -2,11 +2,13 @@ import { useState } from 'react';
 import ProductRetailerCatalog from './ProductRetailerCatalog';
 import DesignManagerRetailer from './DesignManagerRetailer';
 import RetailerSettingsForm from './RetailerSettingsForm';
+import RetailerQCHubsForm from './RetailerQCHubsForm';
 
 const TABS = [
     { id: 'catalog', label: 'Product Catalog' },
     { id: 'designs', label: 'My Designs' },
     { id: 'settings', label: 'Pricing Settings' },
+    { id: 'hubs', label: 'QC Hubs' },
 ];
 
 const RetailerDashboard = () => {
@@ -33,6 +35,7 @@ const RetailerDashboard = () => {
             {activeTab === 'catalog' && <ProductRetailerCatalog />}
             {activeTab === 'designs' && <DesignManagerRetailer />}
             {activeTab === 'settings' && <RetailerSettingsForm />}
+            {activeTab === 'hubs' && <RetailerQCHubsForm />}
         </div>
     );
 };

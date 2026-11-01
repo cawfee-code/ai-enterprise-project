@@ -93,6 +93,10 @@ app.get('/api/products', async (req, res) => {
     res.json(products);
 });
 
+// --- FEATURE 4 (Retailer): Quality Control Hub Addresses ---
+const retailerHubRoutes = require('./routes/retailerHubRoutes');
+app.use('/api/retailer-hubs', retailerHubRoutes(verifyRole));
+
 app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
     try {
         const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
