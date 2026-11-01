@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from './context/AuthContext';
 import Layout from './components/Layout';
 import RegisterRetailerForm from './components/RegisterRetailerForm';
@@ -17,6 +17,10 @@ function App() {
     const [retailerAuthMode, setRetailerAuthMode] = useState('login');
     const [manufacturerAuthMode, setManufacturerAuthMode] = useState('login');
     const [logistics, setLogistics] = useState(null);
+
+    useEffect(() => {
+        if (!user) setLogistics(null);
+    }, [user]);
 
     const bgTheme = portalMode === 'manufacturer' || user?.role === 'manufacturer' ? 'manufacturer' :
     portalMode === 'retailer' || user?.role === 'retailer' ? 'retailer' : 'mixed';
