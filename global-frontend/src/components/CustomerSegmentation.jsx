@@ -36,7 +36,17 @@ const CustomerSegmentation = () => {
         setIsProcessing(true);
         try {
             await fetch('http://localhost:8000/cluster-customers', { method: 'POST' });
-            fetchCustomers(); 
+            
+            // Await the local refresh so the DB pipeline guarantees completion
+            const token = localStorage.getItem('token') || user?.token;
+            const res = await fetch('http://localhost:5000/api/customers?limit=100', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setCustomers(data.data || []);
+            
+            // Trigger the executive dashboard to update
+            window.dispatchEvent(new Event('dashboardSync'));
         } catch (err) {
             console.error("Clustering Error:", err);
         } finally {
@@ -49,7 +59,15 @@ const CustomerSegmentation = () => {
         try {
             await fetch('http://localhost:5000/api/internal/simulate-data', { method: 'POST' });
             await fetch('http://localhost:8000/cluster-customers', { method: 'POST' });
-            fetchCustomers();
+            
+            const token = localStorage.getItem('token') || user?.token;
+            const res = await fetch('http://localhost:5000/api/customers?limit=100', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setCustomers(data.data || []);
+
+            window.dispatchEvent(new Event('dashboardSync'));
         } catch (err) {
             console.error("Simulation Error:", err);
         } finally {

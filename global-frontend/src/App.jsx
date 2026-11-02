@@ -12,6 +12,7 @@ import RetailerDashboard from './components/RetailerDashboard';
 import TrendFeed from './components/TrendFeed';
 import CustomerSegmentation from './components/CustomerSegmentation';
 import ManufacturerCustomerTable from './components/ManufacturerCustomerTable';
+import ManufacturerAnalyticsCard from './components/ManufacturerAnalyticsCard';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -330,6 +331,9 @@ function App() {
 
             {user?.role === 'manufacturer' && (
                 <div className="font-playfair max-w-5xl mx-auto p-4 md:p-8">
+
+                    {/* Feature 8: Executive Data Aggregation Dashboards */}
+                    <ManufacturerAnalyticsCard />
                     
                     {/* Feature 7: AI Customer Segmentation Visualizer */}
                     <CustomerSegmentation />
