@@ -1,0 +1,5 @@
+[
+  { "source": "DEMO_google_trends", "hashtag": "sustainable fashion", "volume": 50000, "rawTrafficLabel": "50,000+ (simulated)", "note": "SIMULATED — university demo only, never submitted to the live pipeline" },
+  { "source": "DEMO_instagram", "hashtag": "streetwear", "volume": 1200, "note": "SIMULATED — university demo only, never submitted to the live pipeline" },
+  { "source": "DEMO_facebook", "hashtag": "New drop this weekend", "volume": 340, "note": "SIMULATED — university demo only, never submitted to the live pipeline" }
+]

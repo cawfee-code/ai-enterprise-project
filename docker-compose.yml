@@ -15,6 +15,7 @@ services:
       - "5000:5000"
     environment:
       - REDIS_HOST=redis
+      - INGEST_API_KEY=855bfc98d7544d8eb030b9c702580db9ff32889c83ce9707864f7dbe8fa41288
     depends_on:
       - redis
       - rabbitmq
@@ -29,8 +30,8 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: platform-rabbitmq
     ports:
-      - "5672:5672"   # Main AMQP port
-      - "15672:15672" # UI Dashboard
+      - "5672:5672"
+      - "15672:15672"
   
   nlp-engine:
     build: ./nlp-engine
@@ -39,3 +40,28 @@ services:
       - "8000:8000"
     depends_on:
       - backend
+
+  trend-pipeline:
+    build: ./trend-pipeline
+    container_name: platform-trend-pipeline
+    environment:
+      - NODE_DUMP_URL=http://platform-backend:5000/api/trends/dump
+      - INGEST_API_KEY=${INGEST_API_KEY}
+      - ADMIN_KEY=${TREND_PIPELINE_ADMIN_KEY}
+      - POLL_INTERVAL_SECONDS=1800
+      - GOOGLE_TRENDS_GEO=US
+      - IG_HASHTAGS=fashion,streetwear,sustainablefashion
+      - SEEN_STORE_PATH=/app/data/seen_trends.json
+      - GOOGLE_TRENDS_FASHION_KEYWORDS=${GOOGLE_TRENDS_FASHION_KEYWORDS}
+      - IG_ACCESS_TOKEN=${IG_ACCESS_TOKEN}
+      - IG_BUSINESS_ACCOUNT_ID=${IG_BUSINESS_ACCOUNT_ID}
+      - FB_PAGE_ACCESS_TOKEN=${FB_PAGE_ACCESS_TOKEN}
+      - FB_PAGE_IDS=${FB_PAGE_IDS}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+    volumes:
+      - trend_pipeline_data:/app/data
+    depends_on:
+      - backend
+
+volumes:
+  trend_pipeline_data:
