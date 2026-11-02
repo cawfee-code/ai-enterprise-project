@@ -73,6 +73,14 @@ const verifyRole = (requiredRole) => {
     };
 };
 
+const verifyIngestKey = (req, res, next) => {
+    const key = req.header('x-ingest-key');
+    if (!key || key !== process.env.INGEST_API_KEY) {
+        return res.status(401).json({ error: "Invalid or missing ingest key" });
+    }
+    next();
+};
+
 // --- FEATURE 1: Authentication ---
 const userAuthRoutes = require('./routes/userAuthRoutes');
 app.use('/api/users', userAuthRoutes);
@@ -207,9 +215,14 @@ async function connectQueue() {
 }
 connectQueue();
 
-app.post('/api/trends/dump', async (req, res) => {
+app.post('/api/trends/dump', verifyIngestKey, async (req, res) => {
     try {
-        const data = req.body; 
+        const data = req.body;
+
+        if (!Array.isArray(data) || data.some(t => !t.source || !t.hashtag)) {
+            return res.status(400).json({ error: "Payload must be an array of { source, hashtag, ... } objects" });
+        }
+
         channel.sendToQueue('ai_trend_dump', Buffer.from(JSON.stringify(data)), { persistent: true });
         res.status(202).json({ message: "Data accepted into queue for asynchronous processing." });
     } catch (error) {
