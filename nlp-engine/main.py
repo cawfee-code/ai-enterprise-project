@@ -1,6 +1,7 @@
 import asyncio
 import requests
 import numpy as np
+import spacy
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import pipeline
@@ -18,8 +19,24 @@ app.add_middleware(
 
 # --- FEATURE 6: NLP Sentiment Engine ---
 sentiment_analyzer = pipeline("sentiment-analysis", model="./BERT", tokenizer="./BERT")
+nlp = spacy.load("en_core_web_sm")
 NODE_GET_URL = "http://platform-backend:5000/api/trends"
 NODE_WEBHOOK_URL = "http://platform-backend:5000/api/trends/sentiment"
+
+
+def extract_product_item(text):
+    """Identifies the likely physical product/item from the trend text using
+    noun-phrase extraction. Falls back to the cleaned raw text if nothing is found —
+    never fabricates a product name that isn't grounded in the actual text."""
+    clean_text = text.replace("#", " ").strip()
+    if not clean_text:
+        return clean_text
+    doc = nlp(clean_text)
+    noun_chunks = [chunk.text.strip() for chunk in doc.noun_chunks if chunk.text.strip()]
+    if noun_chunks:
+        return max(noun_chunks, key=len)
+    return clean_text
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -45,7 +62,7 @@ async def real_time_nlp_worker():
                     else:
                         score = "Neutral"
                     
-                    extracted_item = text.replace("#", "") + " Merchandise"
+                    extracted_item = extract_product_item(text)
 
                     requests.put(f"{NODE_WEBHOOK_URL}/{trend['_id']}", json={
                         "extractedItem": extracted_item,

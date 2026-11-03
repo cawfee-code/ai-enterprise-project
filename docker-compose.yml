@@ -44,6 +44,8 @@ services:
   trend-pipeline:
     build: ./trend-pipeline
     container_name: platform-trend-pipeline
+    ports:
+      - "8001:8001"
     environment:
       - NODE_DUMP_URL=http://platform-backend:5000/api/trends/dump
       - INGEST_API_KEY=${INGEST_API_KEY}
@@ -58,6 +60,7 @@ services:
       - FB_PAGE_ACCESS_TOKEN=${FB_PAGE_ACCESS_TOKEN}
       - FB_PAGE_IDS=${FB_PAGE_IDS}
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - YOUTUBE_MIN_INTERVAL_SECONDS=${YOUTUBE_MIN_INTERVAL_SECONDS}
     volumes:
       - trend_pipeline_data:/app/data
     depends_on:
