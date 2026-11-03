@@ -99,6 +99,10 @@ app.use('/api/retailer-settings', retailerSettingsRoutes(verifyRole));
 const retailerOrdersRoutes = require('./routes/retailerOrdersRoutes');
 app.use('/api/retailer-orders', retailerOrdersRoutes(verifyRole));
 
+// --- Retailer custom design requests, merged into the manufacturer's Production Queue ---
+const designRequestRoutes = require('./routes/designRequestRoutes');
+app.use('/api/design-requests', designRequestRoutes(verifyRole));
+
 // --- FEATURE 3: Dynamic Pricing Catalog (full CRUD, incl. manufacturer rate-setting form) ---
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes(verifyRole, upload));
@@ -195,6 +199,46 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
         res.status(500).json({ error: error.message });
     } finally {
         if (lock) await lock.release().catch(err => console.error(err));
+    }
+});
+
+// --- Live shipping cost preview for the Cart page, reusing the same Feature 4 distance-based
+// formula as order placement above — read-only, places nothing, so the retailer can see the
+// price change as they switch between saved delivery addresses before requesting an order.
+app.post('/api/orders/shipping-estimate', verifyRole('retailer'), async (req, res) => {
+    try {
+        const { hubId, items } = req.body;
+        if (!hubId) return res.status(400).json({ error: 'A delivery address is required.' });
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'No items to estimate.' });
+        }
+
+        const retailerQCHub = await Hub.findOne({ _id: hubId, ownerId: req.user.userId, hubType: 'retailer_qc_hub' });
+        if (!retailerQCHub) return res.status(404).json({ error: 'Address not found.' });
+
+        const results = [];
+        let totalShippingCost = 0;
+
+        for (const item of items) {
+            const product = await Product.findById(item.productId);
+            if (!product) continue;
+
+            const mfgHub = await Hub.findOne({ ownerId: product.manufacturerId, hubType: 'manufacturer_warehouse' });
+            if (!mfgHub) {
+                results.push({ productId: item.productId, error: 'Manufacturer has not set up a warehouse address yet.' });
+                continue;
+            }
+
+            const distanceKm = calculateDistanceKm(mfgHub.location.coordinates, retailerQCHub.location.coordinates);
+            const shippingCost = parseFloat((distanceKm * 0.05 * item.quantity).toFixed(2));
+            totalShippingCost += shippingCost;
+
+            results.push({ productId: item.productId, distanceKm: parseFloat(distanceKm.toFixed(2)), shippingCost });
+        }
+
+        res.status(200).json({ data: results, totalShippingCost: parseFloat(totalShippingCost.toFixed(2)) });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to estimate shipping: ' + error.message });
     }
 });
 

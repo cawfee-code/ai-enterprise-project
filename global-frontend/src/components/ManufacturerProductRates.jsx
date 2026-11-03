@@ -3,6 +3,8 @@ import { AuthContext } from '../context/AuthContext';
 import { decodeJwtPayload } from '../utils/jwt';
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../api/manufacturerProductsApi';
 
+const BACKEND_ORIGIN = 'http://localhost:5000';
+
 const EMPTY_FORM = {
     name: '',
     description: '',
@@ -12,7 +14,8 @@ const EMPTY_FORM = {
     lengthCm: '',
     widthCm: '',
     heightCm: '',
-    stockCount: ''
+    stockCount: '',
+    designFile: null
 };
 
 const ManufacturerProductRates = () => {
@@ -24,6 +27,7 @@ const ManufacturerProductRates = () => {
     const [error, setError] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [editingImageUrl, setEditingImageUrl] = useState(null);
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
 
@@ -43,12 +47,14 @@ const ManufacturerProductRates = () => {
 
     const openCreateForm = () => {
         setEditingId(null);
+        setEditingImageUrl(null);
         setForm(EMPTY_FORM);
         setIsFormOpen(true);
     };
 
     const openEditForm = (product) => {
         setEditingId(product._id);
+        setEditingImageUrl(product.designFileUrl || null);
         setForm({
             name: product.name,
             description: product.description || '',
@@ -58,7 +64,8 @@ const ManufacturerProductRates = () => {
             lengthCm: product.dimensions?.lengthCm,
             widthCm: product.dimensions?.widthCm,
             heightCm: product.dimensions?.heightCm,
-            stockCount: product.stockCount
+            stockCount: product.stockCount,
+            designFile: null
         });
         setIsFormOpen(true);
     };
@@ -79,7 +86,8 @@ const ManufacturerProductRates = () => {
                 stockCount: form.stockCount,
                 'dimensions[lengthCm]': form.lengthCm,
                 'dimensions[widthCm]': form.widthCm,
-                'dimensions[heightCm]': form.heightCm
+                'dimensions[heightCm]': form.heightCm,
+                designFile: form.designFile
             };
 
             if (editingId) {
@@ -110,7 +118,7 @@ const ManufacturerProductRates = () => {
     return (
         <div className="p-6 bg-white rounded-2xl shadow-sm border border-sage-200 mb-8">
             <div className="flex justify-between items-center mb-2 flex-wrap gap-3">
-                <h2 className="text-xl font-bold text-olive-900">Your Printing Rates</h2>
+                <h2 className="text-xl font-bold text-olive-900">Your Products & Pricing</h2>
                 <button
                     onClick={openCreateForm}
                     className="px-4 py-2 bg-olive-900 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition"
@@ -133,6 +141,7 @@ const ManufacturerProductRates = () => {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="text-left text-gray-500 border-b border-sage-200">
+                            <th className="py-2 pr-4">Image</th>
                             <th className="py-2 pr-4">Product</th>
                             <th className="py-2 pr-4">Base Cost</th>
                             <th className="py-2 pr-4">Margin %</th>
@@ -144,6 +153,19 @@ const ManufacturerProductRates = () => {
                     <tbody>
                         {products.map((p) => (
                             <tr key={p._id} className="border-b border-sage-100">
+                                <td className="py-2.5 pr-4">
+                                    {p.designFileUrl ? (
+                                        <img
+                                            src={`${BACKEND_ORIGIN}${p.designFileUrl}`}
+                                            alt={p.name}
+                                            className="w-10 h-10 rounded-lg object-cover border border-sage-200"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-lg bg-sage-50 border border-sage-200 flex items-center justify-center text-[10px] text-gray-400">
+                                            No image
+                                        </div>
+                                    )}
+                                </td>
                                 <td className="py-2.5 pr-4">{p.name}</td>
                                 <td className="py-2.5 pr-4">${p.baseManufacturingCost?.toFixed(2)}</td>
                                 <td className="py-2.5 pr-4">{p.targetMarginPercentage}%</td>
@@ -163,7 +185,7 @@ const ManufacturerProductRates = () => {
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
                     <form
                         onSubmit={handleSubmit}
-                        className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg space-y-3"
+                        className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg space-y-3 max-h-[90vh] overflow-y-auto"
                     >
                         <h3 className="text-lg font-bold text-olive-900 mb-2">
                             {editingId ? 'Edit product rate' : 'Add product rate'}
@@ -177,6 +199,27 @@ const ManufacturerProductRates = () => {
                         <label className="block text-sm">
                             Description
                             <input value={form.description} onChange={handleChange('description')} className="mt-1 w-full border border-sage-200 rounded-lg px-3 py-2" />
+                        </label>
+
+                        <label className="block text-sm">
+                            Product image
+                            {editingImageUrl && !form.designFile && (
+                                <div className="flex items-center gap-2 mt-1 mb-1.5">
+                                    <img
+                                        src={`${BACKEND_ORIGIN}${editingImageUrl}`}
+                                        alt="Current"
+                                        className="w-12 h-12 rounded-lg object-cover border border-sage-200"
+                                    />
+                                    <span className="text-xs text-gray-500">Current image — choose a file to replace it</span>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/svg+xml,application/pdf"
+                                onChange={(e) => setForm((f) => ({ ...f, designFile: e.target.files[0] || null }))}
+                                className="mt-1 w-full border border-sage-200 rounded-lg px-3 py-2 text-xs file:mr-3 file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-olive-900 file:text-white file:text-xs"
+                            />
+                            <span className="text-[11px] text-gray-400">Shown to retailers in the product catalog. JPG, PNG, SVG, or PDF — max 10MB.</span>
                         </label>
 
                         <label className="block text-sm">

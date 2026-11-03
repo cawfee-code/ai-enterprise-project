@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { fetchDesigns, uploadDesign, updateDesign, deleteDesign } from '../api/designRetailerApi';
+import { requestCustomDesignOrder } from '../api/designRequestsApi';
 
 const BACKEND_ORIGIN = 'http://localhost:5000';
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.jpe', '.png', '.gif', '.webp', '.svg', '.bmp', '.avif'];
@@ -38,7 +39,17 @@ const DesignManagerRetailer = () => {
     const [form, setForm] = useState(emptyForm);
     const [submitting, setSubmitting] = useState(false);
 
+    const [requestingId, setRequestingId] = useState(null);
+    const [requestForm, setRequestForm] = useState({ manufacturerBusinessName: '', quantity: 1, note: '' });
+    const [requestSubmitting, setRequestSubmitting] = useState(false);
+    const [requestError, setRequestError] = useState('');
+    const [requestSuccess, setRequestSuccess] = useState('');
+
     const loadDesigns = () => {
+        if (!user?.token) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         fetchDesigns(user.token)
             .then(setDesigns)
@@ -48,7 +59,8 @@ const DesignManagerRetailer = () => {
 
     useEffect(() => {
         loadDesigns();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.token]);
 
     const startAdd = () => {
         setForm(emptyForm);
@@ -101,6 +113,38 @@ const DesignManagerRetailer = () => {
     };
 
     const editingDesign = editingId ? designs.find((d) => d._id === editingId) : null;
+
+    const startRequest = (designId) => {
+        setRequestingId(designId);
+        setRequestForm({ manufacturerBusinessName: '', quantity: 1, note: '' });
+        setRequestError('');
+        setRequestSuccess('');
+    };
+
+    const cancelRequest = () => {
+        setRequestingId(null);
+        setRequestError('');
+    };
+
+    const handleRequestSubmit = async (e, designId) => {
+        e.preventDefault();
+        setRequestError('');
+        setRequestSubmitting(true);
+        try {
+            await requestCustomDesignOrder({
+                designId,
+                manufacturerBusinessName: requestForm.manufacturerBusinessName,
+                quantity: Number(requestForm.quantity) || 1,
+                note: requestForm.note
+            }, user.token);
+            setRequestingId(null);
+            setRequestSuccess(`Request sent to ${requestForm.manufacturerBusinessName}. They'll see it in their Production Queue as Pending.`);
+        } catch (err) {
+            setRequestError(err.message);
+        } finally {
+            setRequestSubmitting(false);
+        }
+    };
 
     const uploadForm = (
         <form onSubmit={handleSubmit} className="flex flex-col">
@@ -166,6 +210,11 @@ const DesignManagerRetailer = () => {
                     {error}
                 </div>
             )}
+            {requestSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3 mb-4">
+                    {requestSuccess}
+                </div>
+            )}
 
             <div className="grid grid-cols-[minmax(0,230px)_1fr] gap-5 items-start">
                 <div
@@ -197,7 +246,11 @@ const DesignManagerRetailer = () => {
                 </div>
 
                 <div>
-                    {loading ? (
+                    {!user?.token ? (
+                        <p className="text-sm text-red-600 text-center py-10 border border-hairline rounded-xl bg-white">
+                            Your session has expired. Please log out and log back in to see your designs.
+                        </p>
+                    ) : loading ? (
                         <p className="text-sm text-muted">Loading your designs…</p>
                     ) : designs.length === 0 ? (
                         <p className="text-sm text-muted text-center py-10 border border-hairline rounded-xl bg-white">
@@ -223,7 +276,7 @@ const DesignManagerRetailer = () => {
                                         <p className="text-xs text-muted mb-3 flex-grow line-clamp-2">
                                             {design.description || 'No description added.'}
                                         </p>
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between mb-2">
                                             <span className="text-[11px] text-gray-400">{formatDate(design.createdAt)}</span>
                                             <div className="flex gap-1.5">
                                                 <button
@@ -242,6 +295,63 @@ const DesignManagerRetailer = () => {
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {requestingId !== design._id && (
+                                            <button
+                                                onClick={() => startRequest(design._id)}
+                                                className="w-full text-xs font-semibold text-ink-900 border border-hairline rounded-lg py-1.5 hover:bg-gray-50 transition"
+                                            >
+                                                Request custom order
+                                            </button>
+                                        )}
+
+                                        {requestingId === design._id && (
+                                            <form onSubmit={(e) => handleRequestSubmit(e, design._id)} className="border border-hairline rounded-lg p-3 bg-[#f7f8f4]">
+                                                {requestError && <p className="text-xs text-red-600 mb-2">{requestError}</p>}
+                                                <label className="text-[11px] font-medium text-ink-900 mb-1 block">Manufacturer's business name</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. Acme Printing Co."
+                                                    value={requestForm.manufacturerBusinessName}
+                                                    onChange={(e) => setRequestForm({ ...requestForm, manufacturerBusinessName: e.target.value })}
+                                                    required
+                                                    className="w-full mb-2 rounded-lg border border-hairline px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-accent-lime"
+                                                />
+                                                <label className="text-[11px] font-medium text-ink-900 mb-1 block">Quantity</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={requestForm.quantity}
+                                                    onChange={(e) => setRequestForm({ ...requestForm, quantity: e.target.value })}
+                                                    required
+                                                    className="w-full mb-2 rounded-lg border border-hairline px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-accent-lime"
+                                                />
+                                                <label className="text-[11px] font-medium text-ink-900 mb-1 block">Note (optional)</label>
+                                                <textarea
+                                                    placeholder="Any details for the manufacturer..."
+                                                    value={requestForm.note}
+                                                    onChange={(e) => setRequestForm({ ...requestForm, note: e.target.value })}
+                                                    rows={2}
+                                                    className="w-full mb-2 rounded-lg border border-hairline px-2.5 py-1.5 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-accent-lime"
+                                                />
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={requestSubmitting}
+                                                        className="flex-1 bg-accent-lime hover:brightness-95 text-ink-900 font-semibold rounded-lg py-1.5 text-xs transition disabled:opacity-60"
+                                                    >
+                                                        {requestSubmitting ? 'Sending…' : 'Send request'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={cancelRequest}
+                                                        className="px-3 rounded-lg border border-hairline text-xs text-ink-900"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
                                     </div>
                                 </div>
                             ))}

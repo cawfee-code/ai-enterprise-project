@@ -12,6 +12,7 @@ const ManufacturerOrderQueue = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [draggedId, setDraggedId] = useState(null);
+    const [draggedType, setDraggedType] = useState(null);
 
     const fetchOrders = () => {
         setLoading(true);
@@ -33,7 +34,7 @@ const ManufacturerOrderQueue = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const updateStatus = (orderId, newStatus) => {
+    const updateStatus = (orderId, newStatus, type) => {
         const previous = orders;
         setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: newStatus } : o)));
 
@@ -43,7 +44,7 @@ const ManufacturerOrderQueue = () => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${user?.token}`
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ status: newStatus, type })
         })
             .then((res) => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -56,8 +57,9 @@ const ManufacturerOrderQueue = () => {
 
     const handleDrop = (newStatus) => {
         if (draggedId) {
-            updateStatus(draggedId, newStatus);
+            updateStatus(draggedId, newStatus, draggedType);
             setDraggedId(null);
+            setDraggedType(null);
         }
     };
 
@@ -96,16 +98,37 @@ const ManufacturerOrderQueue = () => {
                                         <div
                                             key={order._id}
                                             draggable
-                                            onDragStart={() => setDraggedId(order._id)}
+                                            onDragStart={() => {
+                                                setDraggedId(order._id);
+                                                setDraggedType(order.type);
+                                            }}
                                             className="bg-white rounded-lg border border-sage-200 p-3 shadow-sm cursor-grab active:cursor-grabbing"
                                         >
-                                            <p className="font-medium text-sm text-ink-900">{order.productName}</p>
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="font-medium text-sm text-ink-900">{order.productName}</p>
+                                                {order.type === 'design_request' && (
+                                                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                                                        Custom request
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-gray-500">
                                                 Qty: {order.quantity} &middot; {order.retailerEmail}
                                             </p>
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                Shipping est.: ${order.shippingCost?.toFixed(2) ?? '0.00'}
-                                            </p>
+                                            {order.retailerTargetProfitPercentage != null && (
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Retailer's target margin: {order.retailerTargetProfitPercentage}%
+                                                </p>
+                                            )}
+                                            {order.type === 'design_request' ? (
+                                                order.note && (
+                                                    <p className="text-xs text-gray-400 mt-1">Note: {order.note}</p>
+                                                )
+                                            ) : (
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    Shipping est.: ${order.shippingCost?.toFixed(2) ?? '0.00'}
+                                                </p>
+                                            )}
                                             <p className="text-xs text-gray-400 mt-1">
                                                 {new Date(order.createdAt).toLocaleDateString()}
                                             </p>

@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import useCartStore from '../store/useCartStore';
 import { fetchRetailerHubs } from '../api/retailerHubsApi';
 import { placeOrder } from '../api/ordersApi';
+import { estimateShipping } from '../api/shippingEstimateApi';
 
 const CartPage = () => {
     const { user } = useContext(AuthContext);
@@ -17,6 +18,9 @@ const CartPage = () => {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
+    const [shippingEstimates, setShippingEstimates] = useState({});
+    const [estimateLoading, setEstimateLoading] = useState(false);
+
     useEffect(() => {
         fetchRetailerHubs(user.token)
             .then((data) => {
@@ -28,7 +32,30 @@ const CartPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Recalculate shipping (Feature 4's real distance-based formula) whenever the
+    // retailer picks a different delivery address or the cart contents change.
+    useEffect(() => {
+        if (!selectedHubId || cart.length === 0) {
+            setShippingEstimates({});
+            return;
+        }
+        setEstimateLoading(true);
+        estimateShipping({
+            hubId: selectedHubId,
+            items: cart.map((item) => ({ productId: item.productId, quantity: item.quantity }))
+        }, user.token)
+            .then((res) => {
+                const map = {};
+                res.data.forEach((r) => { map[r.productId] = r; });
+                setShippingEstimates(map);
+            })
+            .catch(() => setShippingEstimates({}))
+            .finally(() => setEstimateLoading(false));
+    }, [selectedHubId, cart, user.token]);
+
     const total = cart.reduce((sum, item) => sum + item.quantity * (item.price || 0), 0);
+    const shippingTotal = Object.values(shippingEstimates).reduce((sum, r) => sum + (r.shippingCost || 0), 0);
+    const grandTotal = total + shippingTotal;
 
     const handleRequest = async () => {
         setError('');
@@ -84,6 +111,17 @@ const CartPage = () => {
                                             Operational cost ${item.pricingBreakdown.operationalCost?.toFixed(2)} · Billable weight {item.pricingBreakdown.billableWeightKg?.toFixed(2)}kg
                                         </p>
                                     )}
+                                    {estimateLoading && (
+                                        <p className="text-[11px] text-muted mt-0.5">Estimating shipping...</p>
+                                    )}
+                                    {!estimateLoading && shippingEstimates[item.productId] && !shippingEstimates[item.productId].error && (
+                                        <p className="text-[11px] text-muted mt-0.5">
+                                            Shipping ${shippingEstimates[item.productId].shippingCost.toFixed(2)} · {shippingEstimates[item.productId].distanceKm}km to this address
+                                        </p>
+                                    )}
+                                    {!estimateLoading && shippingEstimates[item.productId]?.error && (
+                                        <p className="text-[11px] text-amber-700 mt-0.5">{shippingEstimates[item.productId].error}</p>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <input
@@ -128,8 +166,19 @@ const CartPage = () => {
                         )}
                     </div>
 
+                    <div className="max-w-sm mb-3">
+                        <div className="flex items-center justify-between text-sm text-muted">
+                            <span>Items</span>
+                            <span>${total.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-muted">
+                            <span>Shipping to this address</span>
+                            <span>{estimateLoading ? '...' : `$${shippingTotal.toFixed(2)}`}</span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between max-w-sm">
-                        <span className="text-sm font-semibold text-ink-900">Total: ${total.toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-ink-900">Total: ${grandTotal.toFixed(2)}</span>
                         <button
                             onClick={handleRequest}
                             disabled={submitting || hubs.length === 0}

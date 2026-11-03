@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const ManufacturerOrderAnalyticsCard = () => {
@@ -27,6 +27,13 @@ const ManufacturerOrderAnalyticsCard = () => {
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
     };
+
+    // Load with no date filter on first render, so the tab shows everything by default
+    // instead of staying blank until the retailer picks dates and clicks Fetch.
+    useEffect(() => {
+        fetchAnalytics();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="p-6 bg-white rounded-2xl shadow-sm border border-sage-200 mb-8">

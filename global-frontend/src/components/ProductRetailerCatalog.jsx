@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { fetchProducts } from '../api/productRetailerApi';
 import useCartStore from '../store/useCartStore';
 
+const BACKEND_ORIGIN = 'http://localhost:5000';
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.jpe', '.png', '.gif', '.webp', '.svg', '.bmp', '.avif'];
+const isImageUrl = (url) => !!url && IMAGE_EXTENSIONS.some((ext) => url.toLowerCase().endsWith(ext));
+
 const getInitials = (name) => {
     if (!name) return '--';
     const parts = name.trim().split(/\s+/);
@@ -46,23 +50,33 @@ const ProductRetailerCatalog = () => {
                         return (
                             <div
                                 key={product._id}
-                                className="bg-white rounded-xl border border-hairline p-4 flex flex-col transition hover:-translate-y-0.5 hover:shadow-md"
+                                className="bg-white rounded-xl border border-hairline overflow-hidden flex flex-col transition hover:-translate-y-0.5 hover:shadow-md"
                             >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="w-12 h-12 rounded-lg bg-[#eef3e6] text-[#3c5a44] flex items-center justify-center font-bold text-sm">
-                                        {getInitials(product.name)}
-                                    </div>
+                                <div className="relative h-36 bg-[#eef3e6] flex items-center justify-center">
+                                    {isImageUrl(product.designFileUrl) ? (
+                                        <img
+                                            src={`${BACKEND_ORIGIN}${product.designFileUrl}`}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-[#3c5a44] font-bold text-2xl">
+                                            {getInitials(product.name)}
+                                        </span>
+                                    )}
                                     {lowStock && (
-                                        <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">
+                                        <span className="absolute top-2.5 right-2.5 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">
                                             Low stock · {remaining} left
                                         </span>
                                     )}
                                     {remaining <= 0 && (
-                                        <span className="text-[11px] font-medium text-muted bg-[#f1f3ec] rounded-full px-2.5 py-0.5">
+                                        <span className="absolute top-2.5 right-2.5 text-[11px] font-medium text-muted bg-white border border-hairline rounded-full px-2.5 py-0.5">
                                             Out of stock
                                         </span>
                                     )}
                                 </div>
+
+                                <div className="p-4 flex flex-col flex-grow">
 
                                 <h3 className="font-semibold text-ink-900 text-[15px]">{product.name}</h3>
                                 <p className="text-[11px] text-muted mt-0.5">
@@ -89,6 +103,7 @@ const ProductRetailerCatalog = () => {
                                     >
                                         {remaining <= 0 ? 'Out of Stock' : 'Add to cart'}
                                     </button>
+                                </div>
                                 </div>
                             </div>
                         );

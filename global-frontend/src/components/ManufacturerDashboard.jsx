@@ -11,7 +11,7 @@ const TABS = [
     { id: 'overview', label: 'Executive Dashboard' },
     { id: 'segmentation', label: 'Customer Segmentation' },
     { id: 'customers', label: 'Your Customers' },
-    { id: 'rates', label: 'Printing Rates' },
+    { id: 'rates', label: 'Products & Pricing' },
     { id: 'warehouse', label: 'Warehouse Address' },
     { id: 'queue', label: 'Production Queue' },
     { id: 'analytics', label: 'Order Analytics' },

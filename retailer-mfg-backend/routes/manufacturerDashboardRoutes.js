@@ -13,7 +13,14 @@ module.exports = (verifyRole) => {
             if (startDate || endDate) {
                 matchStage.createdAt = {};
                 if (startDate) matchStage.createdAt.$gte = new Date(startDate);
-                if (endDate) matchStage.createdAt.$lte = new Date(endDate);
+                if (endDate) {
+                    // A plain date like "2026-11-04" parses as midnight UTC, which would cut the
+                    // range off at the very start of the end date instead of including it.
+                    // Push it to the last instant of that day so the end date is fully included.
+                    const endOfDay = new Date(endDate);
+                    endOfDay.setUTCHours(23, 59, 59, 999);
+                    matchStage.createdAt.$lte = endOfDay;
+                }
             }
 
             const revenueTimeline = await Order.aggregate([
@@ -31,7 +38,6 @@ module.exports = (verifyRole) => {
                 {
                     $group: {
                         _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-                        // NOTE: uses CURRENT product price, not price-at-purchase-time (same caveat as the retailer card)
                         totalRevenue: { $sum: { $multiply: ['$quantity', '$productInfo.price'] } },
                         ordersCount: { $sum: 1 },
                         unitsSold: { $sum: '$quantity' }
