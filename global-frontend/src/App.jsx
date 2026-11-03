@@ -17,6 +17,8 @@ import ManufacturerOrderQueue from './components/ManufacturerOrderQueue';
 import ManufacturerProductRates from './components/ManufacturerProductRates';
 import ManufacturerHubForm from './components/ManufacturerHubForm';
 import ManufacturerOrderAnalyticsCard from './components/ManufacturerOrderAnalyticsCard';
+import ManufacturerDashboard from './components/ManufacturerDashboard';
+
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -334,29 +336,12 @@ function App() {
             )}
 
             {user?.role === 'manufacturer' && (
-                <div className="font-playfair max-w-5xl mx-auto p-4 md:p-8">
-
-                    {/* Feature 8: Executive Data Aggregation Dashboards */}
-                    <ManufacturerAnalyticsCard />
-                    
-                    {/* Feature 7: AI Customer Segmentation Visualizer */}
-                    <CustomerSegmentation />
-
-                    {/* Feature 7 (CRM slice): manufacturer-scoped retailer customer table */}
-                    <ManufacturerCustomerTable />
-
-                    <ManufacturerProductRates />
-
-                    {/* Feature 4 (Manufacturer): warehouse address used for real shipping cost calculation */}
-                    <ManufacturerHubForm />
-
-                    {/* Feature 2 (Manufacturer slice): Production queue Kanban board */}
-                    <ManufacturerOrderQueue />
-
-                    <ManufacturerOrderAnalyticsCard />
+                <div className="font-playfair max-w-6xl mx-auto p-4 md:p-8">
+                    <ManufacturerDashboard />
                 </div>
             )}
-        </Layout>
+
+                    </Layout>
     );
 }
 
