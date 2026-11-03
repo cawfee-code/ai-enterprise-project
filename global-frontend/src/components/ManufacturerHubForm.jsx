@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { fetchManufacturerHubs, createManufacturerHub, updateManufacturerHub, deleteManufacturerHub } from '../api/manufacturerHubsApi';
 
-const emptyForm = { addressString: '', latitude: '', longitude: '' };
+const emptyForm = { pincode: '' };
 
 const ManufacturerHubForm = () => {
     const { user } = useContext(AuthContext);
@@ -35,11 +35,7 @@ const ManufacturerHubForm = () => {
     };
 
     const startEdit = (hub) => {
-        setForm({
-            addressString: hub.addressString,
-            latitude: String(hub.location.coordinates[1]),
-            longitude: String(hub.location.coordinates[0]),
-        });
+        setForm({ pincode: hub.addressString });
         setEditingId(hub._id);
         setAdding(false);
         setError('');
@@ -83,45 +79,15 @@ const ManufacturerHubForm = () => {
 
     const renderForm = () => (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <label className="text-sm font-medium text-olive-900 mb-1">Address</label>
+            <label className="text-sm font-medium text-olive-900 mb-1">Pin code</label>
             <input
                 type="text"
-                placeholder="e.g. 500 Factory Rd, San Francisco, CA"
-                value={form.addressString}
-                onChange={(e) => setForm({ ...form, addressString: e.target.value })}
+                placeholder="e.g. 94103"
+                value={form.pincode}
+                onChange={(e) => setForm({ ...form, pincode: e.target.value })}
                 required
                 className="mb-3 rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
             />
-            <div className="grid grid-cols-2 gap-2 mb-3">
-                <div>
-                    <label className="text-sm font-medium text-olive-900 mb-1 block">Latitude</label>
-                    <input
-                        type="number"
-                        step="any"
-                        min="-90"
-                        max="90"
-                        placeholder="e.g. 37.7749"
-                        value={form.latitude}
-                        onChange={(e) => setForm({ ...form, latitude: e.target.value })}
-                        required
-                        className="w-full rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
-                    />
-                </div>
-                <div>
-                    <label className="text-sm font-medium text-olive-900 mb-1 block">Longitude</label>
-                    <input
-                        type="number"
-                        step="any"
-                        min="-180"
-                        max="180"
-                        placeholder="e.g. -122.4194"
-                        value={form.longitude}
-                        onChange={(e) => setForm({ ...form, longitude: e.target.value })}
-                        required
-                        className="w-full rounded-lg border border-sage-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
-                    />
-                </div>
-            </div>
             <div className="flex gap-2 mt-auto">
                 <button
                     type="submit"
@@ -184,10 +150,8 @@ const ManufacturerHubForm = () => {
                             </div>
                         ) : (
                             <div key={hub._id} className="bg-white rounded-xl border border-sage-200 p-5 flex flex-col">
-                                <h3 className="font-semibold text-olive-900 mb-1 text-[15px]">{hub.addressString}</h3>
-                                <p className="text-xs text-gray-500 mb-4">
-                                    {hub.location.coordinates[1].toFixed(4)}, {hub.location.coordinates[0].toFixed(4)}
-                                </p>
+                                <h3 className="font-semibold text-olive-900 mb-1 text-[15px]">PIN {hub.addressString}</h3>
+                                <p className="text-xs text-gray-500 mb-4">Located automatically</p>
                                 <div className="flex gap-2 mt-auto">
                                     <button
                                         onClick={() => startEdit(hub)}

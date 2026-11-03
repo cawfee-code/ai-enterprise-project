@@ -23,6 +23,13 @@ const useCartStore = create((set) => ({
         cart: state.cart.filter(item => item.productId !== productId)
     })),
 
+    // Set an item's quantity directly (used by the Cart page's quantity input)
+    updateQuantity: (productId, quantity) => set((state) => ({
+        cart: state.cart.map(item =>
+            item.productId === productId ? { ...item, quantity } : item
+        )
+    })),
+
     // Clear the entire cart after a successful checkout
     clearCart: () => set({ cart: [] })
 }));

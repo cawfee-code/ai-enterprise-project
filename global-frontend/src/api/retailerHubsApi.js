@@ -9,22 +9,22 @@ export async function fetchRetailerHubs(token) {
     return data;
 }
 
-export async function createRetailerHub({ addressString, latitude, longitude }, token) {
+export async function createRetailerHub({ pincode }, token) {
     const res = await fetch(`${API_BASE}/retailer-hubs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ addressString, latitude, longitude }),
+        body: JSON.stringify({ pincode }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to add QC hub');
     return data;
 }
 
-export async function updateRetailerHub(id, { addressString, latitude, longitude }, token) {
+export async function updateRetailerHub(id, { pincode }, token) {
     const res = await fetch(`${API_BASE}/retailer-hubs/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ addressString, latitude, longitude }),
+        body: JSON.stringify({ pincode }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to update QC hub');

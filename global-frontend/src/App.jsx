@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { AuthContext } from './context/AuthContext';
 import Layout from './components/Layout';
 import RegisterRetailerForm from './components/RegisterRetailerForm';
@@ -7,7 +7,6 @@ import ResetPasswordRetailerForm from './components/ResetPasswordRetailerForm';
 import RegisterManufacturerForm from './components/RegisterManufacturerForm';
 import LoginManufacturerForm from './components/LoginManufacturerForm';
 import ResetPasswordManufacturerForm from './components/ResetPasswordManufacturerForm';
-import RoutingMap from './components/RoutingMap';
 import RetailerDashboard from './components/RetailerDashboard';
 import TrendFeed from './components/TrendFeed';
 import CustomerSegmentation from './components/CustomerSegmentation';
@@ -25,22 +24,9 @@ function App() {
     const [portalMode, setPortalMode] = useState(null);
     const [retailerAuthMode, setRetailerAuthMode] = useState('login');
     const [manufacturerAuthMode, setManufacturerAuthMode] = useState('login');
-    const [logistics, setLogistics] = useState(null);
-
-    useEffect(() => {
-        if (!user) setLogistics(null);
-    }, [user]);
 
     const bgTheme = portalMode === 'manufacturer' || user?.role === 'manufacturer' ? 'manufacturer' :
     portalMode === 'retailer' || user?.role === 'retailer' ? 'retailer' : 'mixed';
-
-    const simulateBulkOrder = () => {
-        setLogistics({
-            routeType: 'bulk_qc_routing',
-            origin: { coordinates: [-122.4194, 37.7749], address: "SF Factory" },
-            destination: { coordinates: [-74.0060, 40.7128], address: "NY Retailer QC Hub" }
-        });
-    };
 
     return (
         <Layout
@@ -328,9 +314,7 @@ function App() {
                     {/* Trend Feed is now securely inside the Retailer Dashboard */}
                     <TrendFeed/>
 
-                    {logistics && <RoutingMap logistics={logistics} />}
-
-                    <RetailerDashboard onSimulateBulkOrder={simulateBulkOrder} />
+                    <RetailerDashboard />
 
                 </div>
             )}

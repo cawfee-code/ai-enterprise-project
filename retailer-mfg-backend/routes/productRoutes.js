@@ -23,7 +23,21 @@ module.exports = (verifyRole, upload) => {
 
     router.get('/', async (req, res) => {
         const products = await Product.find().populate('manufacturerId', 'businessName email');
-        res.json(products);
+
+        // Reuse the Feature 3 pricing engine to surface its cost breakdown to retailers
+        // (operational cost, billable weight, etc.) alongside the catalog listing —
+        // nothing new stored, just recomputed from the same fields already on each product.
+        const withPricing = products.map((product) => {
+            const engineMetrics = calculateDynamicPricing({
+                baseManufacturingCost: product.baseManufacturingCost,
+                targetMarginPercentage: product.targetMarginPercentage,
+                physicalWeightKg: product.physicalWeightKg,
+                dimensions: product.dimensions
+            });
+            return { ...product.toObject(), engineMetrics };
+        });
+
+        res.json(withPricing);
     });
 
     router.post('/', verifyRole('manufacturer'), upload.single('designFile'), async (req, res) => {

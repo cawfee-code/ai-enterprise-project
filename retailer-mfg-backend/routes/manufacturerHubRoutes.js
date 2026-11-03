@@ -1,10 +1,10 @@
 const express = require('express');
 const Hub = require('../models/Hub');
+const geocodePincode = require('../utils/geocodePincode');
 
 module.exports = (verifyRole) => {
     const router = express.Router();
 
-    // READ — list this manufacturer's warehouse hubs
     router.get('/', verifyRole('manufacturer'), async (req, res) => {
         try {
             const hubs = await Hub.find({ ownerId: req.user.userId, hubType: 'manufacturer_warehouse' }).sort({ createdAt: -1 });
@@ -14,28 +14,20 @@ module.exports = (verifyRole) => {
         }
     });
 
-    // CREATE
     router.post('/', verifyRole('manufacturer'), async (req, res) => {
         try {
-            const { addressString, latitude, longitude } = req.body;
+            const { pincode } = req.body;
+            if (!pincode || typeof pincode !== 'string' || !pincode.trim()) {
+                return res.status(400).json({ error: 'Pin code is required.' });
+            }
 
-            if (!addressString || typeof addressString !== 'string') {
-                return res.status(400).json({ error: 'Address is required.' });
-            }
-            const lat = parseFloat(latitude);
-            const lng = parseFloat(longitude);
-            if (Number.isNaN(lat) || lat < -90 || lat > 90) {
-                return res.status(400).json({ error: 'Latitude must be a number between -90 and 90.' });
-            }
-            if (Number.isNaN(lng) || lng < -180 || lng > 180) {
-                return res.status(400).json({ error: 'Longitude must be a number between -180 and 180.' });
-            }
+            const { latitude, longitude } = await geocodePincode(pincode.trim());
 
             const hub = new Hub({
                 ownerId: req.user.userId,
                 hubType: 'manufacturer_warehouse',
-                addressString,
-                location: { type: 'Point', coordinates: [lng, lat] }
+                addressString: pincode.trim(),
+                location: { type: 'Point', coordinates: [longitude, latitude] }
             });
             await hub.save();
             res.status(201).json({ message: 'Warehouse hub added', hub });
@@ -44,7 +36,6 @@ module.exports = (verifyRole) => {
         }
     });
 
-    // UPDATE
     router.put('/:id', verifyRole('manufacturer'), async (req, res) => {
         try {
             const hub = await Hub.findOne({ _id: req.params.id, hubType: 'manufacturer_warehouse' });
@@ -53,18 +44,14 @@ module.exports = (verifyRole) => {
                 return res.status(403).json({ error: 'You do not have access to this warehouse hub' });
             }
 
-            const { addressString, latitude, longitude } = req.body;
-            if (addressString !== undefined) hub.addressString = addressString;
-            if (latitude !== undefined || longitude !== undefined) {
-                const lat = latitude !== undefined ? parseFloat(latitude) : hub.location.coordinates[1];
-                const lng = longitude !== undefined ? parseFloat(longitude) : hub.location.coordinates[0];
-                if (Number.isNaN(lat) || lat < -90 || lat > 90) {
-                    return res.status(400).json({ error: 'Latitude must be a number between -90 and 90.' });
+            const { pincode } = req.body;
+            if (pincode !== undefined) {
+                if (!pincode.trim()) {
+                    return res.status(400).json({ error: 'Pin code is required.' });
                 }
-                if (Number.isNaN(lng) || lng < -180 || lng > 180) {
-                    return res.status(400).json({ error: 'Longitude must be a number between -180 and 180.' });
-                }
-                hub.location = { type: 'Point', coordinates: [lng, lat] };
+                const { latitude, longitude } = await geocodePincode(pincode.trim());
+                hub.addressString = pincode.trim();
+                hub.location = { type: 'Point', coordinates: [longitude, latitude] };
             }
 
             await hub.save();
@@ -74,7 +61,6 @@ module.exports = (verifyRole) => {
         }
     });
 
-    // DELETE
     router.delete('/:id', verifyRole('manufacturer'), async (req, res) => {
         try {
             const hub = await Hub.findOne({ _id: req.params.id, hubType: 'manufacturer_warehouse' });

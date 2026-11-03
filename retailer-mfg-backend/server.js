@@ -95,6 +95,10 @@ app.use('/api/designs', designRoutes(verifyRole, upload));
 const retailerSettingsRoutes = require('./routes/retailerSettingsRoutes');
 app.use('/api/retailer-settings', retailerSettingsRoutes(verifyRole));
 
+// --- FEATURE 2 (Retailer slice): retailer's own order history / status tracking ---
+const retailerOrdersRoutes = require('./routes/retailerOrdersRoutes');
+app.use('/api/retailer-orders', retailerOrdersRoutes(verifyRole));
+
 // --- FEATURE 3: Dynamic Pricing Catalog (full CRUD, incl. manufacturer rate-setting form) ---
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes(verifyRole, upload));
@@ -133,7 +137,7 @@ app.use('/api/manufacturer-dashboard', manufacturerDashboardRoutes(verifyRole));
 
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
-    const { productId, quantity, customerAddress } = req.body;
+    const { productId, quantity, customerAddress, hubId } = req.body;
     const resource = `locks:product:${productId}`;
     const ttl = 5000; 
     let lock;
@@ -151,7 +155,10 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
             return res.status(400).json({ error: 'This manufacturer has not set up a warehouse address yet.' });
         }
 
-        const retailerQCHub = await Hub.findOne({ ownerId: req.user.userId, hubType: 'retailer_qc_hub' });
+        // Use the hub the retailer picked at checkout, falling back to their first saved QC hub for backwards compatibility
+        const retailerQCHub = hubId
+            ? await Hub.findOne({ _id: hubId, ownerId: req.user.userId, hubType: 'retailer_qc_hub' })
+            : await Hub.findOne({ ownerId: req.user.userId, hubType: 'retailer_qc_hub' });
         if (!retailerQCHub) {
             if (lock) await lock.release().catch((err) => console.error(err));
             return res.status(400).json({ error: 'Add a QC hub address before placing an order.' });

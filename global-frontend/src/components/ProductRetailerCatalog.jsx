@@ -81,6 +81,7 @@ const ProductRetailerCatalog = () => {
                                                 name: product.name,
                                                 quantity: 1,
                                                 price: product.price,
+                                                pricingBreakdown: product.engineMetrics,
                                             })
                                         }
                                         disabled={remaining <= 0}

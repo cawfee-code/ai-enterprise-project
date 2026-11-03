@@ -4,9 +4,13 @@ import DesignManagerRetailer from './DesignManagerRetailer';
 import RetailerSettingsForm from './RetailerSettingsForm';
 import RetailerQCHubsForm from './RetailerQCHubsForm';
 import RetailerAnalyticsCard from './RetailerAnalyticsCard';
+import CartPage from './CartPage';
+import RetailerOrdersList from './RetailerOrdersList';
 
 const TABS = [
     { id: 'catalog', label: 'Product Catalog' },
+    { id: 'cart', label: 'Cart' },
+    { id: 'orders', label: 'My Orders' },
     { id: 'designs', label: 'My Designs' },
     { id: 'settings', label: 'Pricing Settings' },
     { id: 'hubs', label: 'QC Hubs' },
@@ -47,6 +51,8 @@ const RetailerDashboard = ({ onSimulateBulkOrder }) => {
 
             <div className="flex-1 min-w-0 bg-[var(--color-paper)] rounded-xl p-8">
                 {activeTab === 'catalog' && <ProductRetailerCatalog />}
+                {activeTab === 'cart' && <CartPage />}
+                {activeTab === 'orders' && <RetailerOrdersList />}
                 {activeTab === 'designs' && <DesignManagerRetailer />}
                 {activeTab === 'settings' && <RetailerSettingsForm />}
                 {activeTab === 'hubs' && <RetailerQCHubsForm />}
