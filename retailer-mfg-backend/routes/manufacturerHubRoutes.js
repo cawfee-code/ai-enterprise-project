@@ -5,6 +5,7 @@ const geocodePincode = require('../utils/geocodePincode');
 module.exports = (verifyRole) => {
     const router = express.Router();
 
+    // READ — list this manufacturer's warehouse hubs
     router.get('/', verifyRole('manufacturer'), async (req, res) => {
         try {
             const hubs = await Hub.find({ ownerId: req.user.userId, hubType: 'manufacturer_warehouse' }).sort({ createdAt: -1 });
@@ -14,19 +15,23 @@ module.exports = (verifyRole) => {
         }
     });
 
+    // CREATE — a pin code is geocoded into the same GeoJSON Point the distance calc already uses
     router.post('/', verifyRole('manufacturer'), async (req, res) => {
         try {
-            const { pincode } = req.body;
+            const { pincode, addressLine } = req.body;
             if (!pincode || typeof pincode !== 'string' || !pincode.trim()) {
                 return res.status(400).json({ error: 'Pin code is required.' });
             }
 
             const { latitude, longitude } = await geocodePincode(pincode.trim());
+            const trimmedAddressLine = (addressLine || '').trim();
 
             const hub = new Hub({
                 ownerId: req.user.userId,
                 hubType: 'manufacturer_warehouse',
-                addressString: pincode.trim(),
+                pincode: pincode.trim(),
+                addressLine: trimmedAddressLine,
+                addressString: trimmedAddressLine || pincode.trim(),
                 location: { type: 'Point', coordinates: [longitude, latitude] }
             });
             await hub.save();
@@ -36,6 +41,7 @@ module.exports = (verifyRole) => {
         }
     });
 
+    // UPDATE
     router.put('/:id', verifyRole('manufacturer'), async (req, res) => {
         try {
             const hub = await Hub.findOne({ _id: req.params.id, hubType: 'manufacturer_warehouse' });
@@ -44,15 +50,19 @@ module.exports = (verifyRole) => {
                 return res.status(403).json({ error: 'You do not have access to this warehouse hub' });
             }
 
-            const { pincode } = req.body;
+            const { pincode, addressLine } = req.body;
             if (pincode !== undefined) {
                 if (!pincode.trim()) {
                     return res.status(400).json({ error: 'Pin code is required.' });
                 }
                 const { latitude, longitude } = await geocodePincode(pincode.trim());
-                hub.addressString = pincode.trim();
+                hub.pincode = pincode.trim();
                 hub.location = { type: 'Point', coordinates: [longitude, latitude] };
             }
+            if (addressLine !== undefined) {
+                hub.addressLine = addressLine.trim();
+            }
+            hub.addressString = hub.addressLine || hub.pincode;
 
             await hub.save();
             res.json({ message: 'Warehouse hub updated', hub });
@@ -61,6 +71,7 @@ module.exports = (verifyRole) => {
         }
     });
 
+    // DELETE
     router.delete('/:id', verifyRole('manufacturer'), async (req, res) => {
         try {
             const hub = await Hub.findOne({ _id: req.params.id, hubType: 'manufacturer_warehouse' });

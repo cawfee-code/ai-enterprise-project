@@ -9,22 +9,22 @@ export async function fetchManufacturerHubs(token) {
     return data;
 }
 
-export async function createManufacturerHub({ pincode }, token) {
+export async function createManufacturerHub({ pincode, addressLine }, token) {
     const res = await fetch(`${API_BASE}/manufacturer-hubs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ pincode }),
+        body: JSON.stringify({ pincode, addressLine }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to add warehouse hub');
     return data;
 }
 
-export async function updateManufacturerHub(id, { pincode }, token) {
+export async function updateManufacturerHub(id, { pincode, addressLine }, token) {
     const res = await fetch(`${API_BASE}/manufacturer-hubs/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ pincode }),
+        body: JSON.stringify({ pincode, addressLine }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to update warehouse hub');

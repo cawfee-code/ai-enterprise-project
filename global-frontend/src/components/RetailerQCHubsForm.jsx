@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { fetchRetailerHubs, createRetailerHub, updateRetailerHub, deleteRetailerHub } from '../api/retailerHubsApi';
 
-const emptyForm = { pincode: '' };
+const emptyForm = { pincode: '', addressLine: '' };
 
 const RetailerQCHubsForm = () => {
     const { user } = useContext(AuthContext);
@@ -35,7 +35,7 @@ const RetailerQCHubsForm = () => {
     };
 
     const startEdit = (hub) => {
-        setForm({ pincode: hub.addressString });
+        setForm({ pincode: hub.pincode, addressLine: hub.addressLine || '' });
         setEditingId(hub._id);
         setAdding(false);
         setError('');
@@ -79,6 +79,14 @@ const RetailerQCHubsForm = () => {
 
     const renderForm = () => (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
+            <label className="text-sm font-medium text-ink-900 mb-1">Address <span className="text-muted font-normal">(optional)</span></label>
+            <input
+                type="text"
+                placeholder="e.g. 221 Harbor Rd, New York, NY"
+                value={form.addressLine}
+                onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
+                className="mb-3 rounded-lg border border-hairline px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-lime"
+            />
             <label className="text-sm font-medium text-ink-900 mb-1">Pin code</label>
             <input
                 type="text"
@@ -150,8 +158,8 @@ const RetailerQCHubsForm = () => {
                             </div>
                         ) : (
                             <div key={hub._id} className="bg-white rounded-xl border border-hairline p-5 flex flex-col">
-                                <h3 className="font-semibold text-ink-900 mb-1 text-[15px]">PIN {hub.addressString}</h3>
-                                <p className="text-xs text-muted mb-4">Located automatically</p>
+                                <h3 className="font-semibold text-ink-900 mb-1 text-[15px]">{hub.addressString}</h3>
+                                <p className="text-xs text-muted mb-4">PIN {hub.pincode} · Located automatically</p>
                                 <div className="flex gap-2 mt-auto">
                                     <button
                                         onClick={() => startEdit(hub)}

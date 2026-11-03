@@ -23,7 +23,9 @@ const hubSchema = new mongoose.Schema({
             required: true
         }
     },
-    addressString: { type: String, required: true }
+    pincode: { type: String, required: true }, // used to geocode the hub's coordinates
+    addressLine: { type: String, default: '' }, // optional free-text address (street, building, etc.)
+    addressString: { type: String, required: true } // display label: addressLine if given, otherwise the pin code
 }, { timestamps: true });
 
 // 2dsphere index enables fast spatial queries
