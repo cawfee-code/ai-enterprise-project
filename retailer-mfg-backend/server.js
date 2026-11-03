@@ -95,6 +95,10 @@ app.use('/api/designs', designRoutes(verifyRole, upload));
 const retailerSettingsRoutes = require('./routes/retailerSettingsRoutes');
 app.use('/api/retailer-settings', retailerSettingsRoutes(verifyRole));
 
+// --- FEATURE 2 (Manufacturer slice): Production queue orders + Kanban status updates ---
+const manufacturerOrdersRoutes = require('./routes/manufacturerOrdersRoutes');
+app.use('/api/manufacturer-orders', manufacturerOrdersRoutes(verifyRole));
+
 // --- FEATURE 3: Dynamic Pricing Catalog ---
 app.get('/api/products', async (req, res) => {
     const products = await Product.find();

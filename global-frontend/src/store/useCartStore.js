@@ -18,6 +18,11 @@ const useCartStore = create((set) => ({
         return { cart: [...state.cart, product] };
     }),
 
+    // Remove a single item from the cart entirely
+    removeFromCart: (productId) => set((state) => ({
+        cart: state.cart.filter(item => item.productId !== productId)
+    })),
+
     // Clear the entire cart after a successful checkout
     clearCart: () => set({ cart: [] })
 }));

@@ -13,6 +13,8 @@ import TrendFeed from './components/TrendFeed';
 import CustomerSegmentation from './components/CustomerSegmentation';
 import ManufacturerCustomerTable from './components/ManufacturerCustomerTable';
 import ManufacturerAnalyticsCard from './components/ManufacturerAnalyticsCard';
+import ManufacturerOrderQueue from './components/ManufacturerOrderQueue';
+
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -341,12 +343,8 @@ function App() {
                     {/* Feature 7 (CRM slice): manufacturer-scoped retailer customer table */}
                     <ManufacturerCustomerTable />
 
-                    <div className="bg-white rounded-3xl shadow-lg border border-sage-200 p-8 mt-8 text-center">
-                        <h2 className="text-lg font-semibold text-olive-900 mb-2">Manufacturer Order Queue</h2>
-                        <p className="text-gray-500 text-sm">
-                            Fulfillment Dashboard not built yet — this is Shouvik & Rohon's scope.
-                        </p>
-                    </div>
+                    {/* Feature 2 (Manufacturer slice): Production queue Kanban board */}
+                    <ManufacturerOrderQueue />
                 </div>
             )}
         </Layout>

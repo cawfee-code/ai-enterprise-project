@@ -5,17 +5,24 @@ export const AuthContext = createContext();
 
 // Create the provider component
 export const AuthProvider = ({ children }) => {
-    // user state will eventually hold { role: 'retailer', token: 'eyJhb...' }
-    const [user, setUser] = useState(null);
+    // Restore the session from localStorage on first load, so a page refresh doesn't log the user out
+    const [user, setUser] = useState(() => {
+        try {
+            const stored = localStorage.getItem('user');
+            return stored ? JSON.parse(stored) : null;
+        } catch {
+            return null;
+        }
+    });
 
     const login = (userData) => {
         setUser(userData);
-        // We will later add logic here to save the JWT to localStorage
+        localStorage.setItem('user', JSON.stringify(userData));
     };
 
     const logout = () => {
         setUser(null);
-        // We will later add logic here to remove the JWT from localStorage
+        localStorage.removeItem('user');
     };
 
     return (
