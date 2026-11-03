@@ -15,6 +15,7 @@ import ManufacturerCustomerTable from './components/ManufacturerCustomerTable';
 import ManufacturerAnalyticsCard from './components/ManufacturerAnalyticsCard';
 import ManufacturerOrderQueue from './components/ManufacturerOrderQueue';
 import ManufacturerProductRates from './components/ManufacturerProductRates';
+import ManufacturerHubForm from './components/ManufacturerHubForm';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -344,6 +345,9 @@ function App() {
                     <ManufacturerCustomerTable />
 
                     <ManufacturerProductRates />
+
+                    {/* Feature 4 (Manufacturer): warehouse address used for real shipping cost calculation */}
+                    <ManufacturerHubForm />
 
                     {/* Feature 2 (Manufacturer slice): Production queue Kanban board */}
                     <ManufacturerOrderQueue />

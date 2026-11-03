@@ -104,6 +104,9 @@ const ManufacturerOrderQueue = () => {
                                                 Qty: {order.quantity} &middot; {order.retailerEmail}
                                             </p>
                                             <p className="text-xs text-gray-400 mt-1">
+                                                Shipping est.: ${order.shippingCost?.toFixed(2) ?? '0.00'}
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">
                                                 {new Date(order.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>

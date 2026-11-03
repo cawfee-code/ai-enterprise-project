@@ -22,7 +22,8 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
         default: 'pending' // Every new order starts as pending
-    }
+    },
+    shippingCost: { type: Number, default: 0 } // Estimated from real hub-to-hub distance
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

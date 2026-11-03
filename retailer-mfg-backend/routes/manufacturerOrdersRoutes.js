@@ -21,6 +21,7 @@ module.exports = (verifyRole) => {
                         quantity: 1,
                         status: 1,
                         createdAt: 1,
+                        shippingCost: 1,
                         productName: '$productInfo.name',
                         retailerEmail: '$retailerInfo.email'
                     }

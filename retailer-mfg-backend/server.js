@@ -18,6 +18,7 @@ const cors = require('cors');
 // Utilities
 const redlock = require('./utils/redisLock');
 const determineRoute = require('./utils/routingMachine');
+const calculateDistanceKm = require('./utils/distance');
 
 const app = express();
 app.use(cors());
@@ -94,10 +95,6 @@ app.use('/api/designs', designRoutes(verifyRole, upload));
 const retailerSettingsRoutes = require('./routes/retailerSettingsRoutes');
 app.use('/api/retailer-settings', retailerSettingsRoutes(verifyRole));
 
-// --- FEATURE 2 (Manufacturer slice): Production queue orders + Kanban status updates ---
-const manufacturerOrdersRoutes = require('./routes/manufacturerOrdersRoutes');
-app.use('/api/manufacturer-orders', manufacturerOrdersRoutes(verifyRole));
-
 // --- FEATURE 3: Dynamic Pricing Catalog (full CRUD, incl. manufacturer rate-setting form) ---
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes(verifyRole, upload));
@@ -106,7 +103,9 @@ app.use('/api/products', productRoutes(verifyRole, upload));
 const retailerHubRoutes = require('./routes/retailerHubRoutes');
 app.use('/api/retailer-hubs', retailerHubRoutes(verifyRole));
 
-
+// --- FEATURE 4 (Manufacturer): Warehouse Hub Addresses ---
+const manufacturerHubRoutes = require('./routes/manufacturerHubRoutes');
+app.use('/api/manufacturer-hubs', manufacturerHubRoutes(verifyRole));
 
 // --- FEATURE 5 (Retailer): Trend cache/database API for Retailer UI ---
 const retailerTrendsRoutes = require('./routes/retailerTrendsRoutes');
@@ -119,6 +118,10 @@ app.use('/api/retailer-sentiment', retailerSentimentRoutes(verifyRole));
 // --- FEATURE 7 (CRM slice): Manufacturer-scoped retailer customer table ---
 const manufacturerCustomersRoutes = require('./routes/manufacturerCustomersRoutes');
 app.use('/api/manufacturer-customers', manufacturerCustomersRoutes(verifyRole));
+
+// --- FEATURE 2 (Manufacturer slice): Production queue orders + Kanban status updates ---
+const manufacturerOrdersRoutes = require('./routes/manufacturerOrdersRoutes');
+app.use('/api/manufacturer-orders', manufacturerOrdersRoutes(verifyRole));
 
 // --- FEATURE 8 (Retailer slice): thin parameterized endpoint for the Order Analytics card ---
 const retailerDashboardRoutes = require('./routes/retailerDashboardRoutes');
@@ -137,12 +140,25 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
         if (!product) return res.status(404).json({ error: 'Product not found' });
         if (product.stockCount < quantity) return res.status(400).json({ error: 'Insufficient stock' });
 
-        // Feature 4: Calculate logistics route based on quantity
-        const mockMfgHub = { type: "Point", coordinates: [-122.4194, 37.7749], address: "SF Factory" };
-        const mockQCHub = { type: "Point", coordinates: [-74.0060, 40.7128], address: "NY Retailer QC" };
-        const routingPlan = determineRoute(quantity, mockMfgHub, mockQCHub, customerAddress);
+        // Feature 4: Calculate logistics route using the manufacturer's and retailer's real hub addresses
+        const mfgHub = await Hub.findOne({ ownerId: product.manufacturerId, hubType: 'manufacturer_warehouse' });
+        if (!mfgHub) {
+            if (lock) await lock.release().catch((err) => console.error(err));
+            return res.status(400).json({ error: 'This manufacturer has not set up a warehouse address yet.' });
+        }
 
-        const newOrder = new Order({ retailerId: req.user.userId, productId, quantity });
+        const retailerQCHub = await Hub.findOne({ ownerId: req.user.userId, hubType: 'retailer_qc_hub' });
+        if (!retailerQCHub) {
+            if (lock) await lock.release().catch((err) => console.error(err));
+            return res.status(400).json({ error: 'Add a QC hub address before placing an order.' });
+        }
+
+        const routingPlan = determineRoute(quantity, mfgHub, retailerQCHub, customerAddress);
+
+        const distanceKm = calculateDistanceKm(mfgHub.location.coordinates, retailerQCHub.location.coordinates);
+        const shippingCost = parseFloat((distanceKm * 0.05 * quantity).toFixed(2));
+
+        const newOrder = new Order({ retailerId: req.user.userId, productId, quantity, shippingCost });
         await newOrder.save();
 
         product.stockCount -= quantity;
@@ -157,11 +173,11 @@ app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
             }
         });
 
-        res.status(201).json({ 
-            message: "Order processed safely!", 
-            order: newOrder, 
-            logistics: routingPlan,
-            remainingStock: product.stockCount 
+        res.status(201).json({
+            message: "Order processed safely!",
+            order: newOrder,
+            logistics: { ...routingPlan, distanceKm: parseFloat(distanceKm.toFixed(2)) },
+            remainingStock: product.stockCount
         });
     } catch (error) {
         if (error.name === 'ExecutionError') return res.status(429).json({ error: 'High traffic. Try again.' });
