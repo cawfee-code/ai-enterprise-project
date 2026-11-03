@@ -8,13 +8,13 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { email, password, role, businessName } = req.body;
 
         if (!isStrongPassword(password)) {
             return res.status(400).json({ error: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.' });
         }
 
-        const newUser = new User({ email, password, role });
+        const newUser = new User({ email, password, role, businessName });
         await newUser.save();
         res.status(201).json({ message: "User securely registered!", userId: newUser._id });
     } catch (error) {

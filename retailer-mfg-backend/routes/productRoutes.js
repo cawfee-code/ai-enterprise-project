@@ -22,7 +22,7 @@ module.exports = (verifyRole, upload) => {
     const router = express.Router();
 
     router.get('/', async (req, res) => {
-        const products = await Product.find();
+        const products = await Product.find().populate('manufacturerId', 'businessName email');
         res.json(products);
     });
 

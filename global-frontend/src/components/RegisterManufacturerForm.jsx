@@ -3,6 +3,7 @@ import { register } from '../api/authManufacturerApi';
 import { isValidEmail, getPasswordError } from '../utils/validation';
 
 const RegisterManufacturerForm = ({ onSuccess }) => {
+    const [businessName, setBusinessName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,6 +14,10 @@ const RegisterManufacturerForm = ({ onSuccess }) => {
         e.preventDefault();
         setError('');
 
+        if (!businessName.trim()) {
+            setError('Please enter your business name.');
+            return;
+        }
         if (!isValidEmail(email)) {
             setError('Please enter a valid email address.');
             return;
@@ -29,7 +34,7 @@ const RegisterManufacturerForm = ({ onSuccess }) => {
 
         setLoading(true);
         try {
-            await register({ email, password });
+            await register({ email, password, businessName: businessName.trim() });
             onSuccess?.({ email });
         } catch (err) {
             setError(err.message);
@@ -48,6 +53,18 @@ const RegisterManufacturerForm = ({ onSuccess }) => {
                     {error}
                 </div>
             )}
+
+            <label className="block mb-4">
+                <span className="text-sm font-medium text-ink-900">Business name</span>
+                <input
+                    type="text"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    required
+                    placeholder="e.g. Nova Print Co."
+                    className="mt-1.5 w-full rounded-lg border border-hairline px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-violet"
+                />
+            </label>
 
             <label className="block mb-4">
                 <span className="text-sm font-medium text-ink-900">Email</span>

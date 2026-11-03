@@ -31,7 +31,7 @@ const ManufacturerProductRates = () => {
         setLoading(true);
         setError('');
         fetchProducts()
-            .then((all) => setProducts(all.filter((p) => p.manufacturerId === myUserId)))
+            .then((all) => setProducts(all.filter((p) => (p.manufacturerId?._id || p.manufacturerId) === myUserId)))
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
     };

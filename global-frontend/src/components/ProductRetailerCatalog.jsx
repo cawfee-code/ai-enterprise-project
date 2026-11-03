@@ -65,6 +65,9 @@ const ProductRetailerCatalog = () => {
                                 </div>
 
                                 <h3 className="font-semibold text-ink-900 text-[15px]">{product.name}</h3>
+                                <p className="text-[11px] text-muted mt-0.5">
+                                    by {product.manufacturerId?.businessName || product.manufacturerId?.email || 'Unknown manufacturer'}
+                                </p>
                                 <p className="text-xs text-muted mt-1 mb-4 line-clamp-2 flex-grow">{product.description}</p>
 
                                 <div className="flex items-center justify-between">

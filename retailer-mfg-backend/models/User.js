@@ -17,7 +17,8 @@ const userSchema = new mongoose.Schema({
         enum: ['retailer', 'manufacturer'], // Strict architectural constraint
         required: true
     },
-    
+    businessName: { type: String, trim: true }, // Manufacturer's display name shown to retailers on the product catalog
+
     // --- FEATURE 7: AI Customer Segmentation Fields ---
     aiCluster: {
         clusterId: { 
