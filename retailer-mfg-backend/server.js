@@ -17,7 +17,6 @@ const cors = require('cors');
 
 // Utilities
 const redlock = require('./utils/redisLock');
-const calculateDynamicPricing = require('./utils/costEngine');
 const determineRoute = require('./utils/routingMachine');
 
 const app = express();
@@ -99,35 +98,15 @@ app.use('/api/retailer-settings', retailerSettingsRoutes(verifyRole));
 const manufacturerOrdersRoutes = require('./routes/manufacturerOrdersRoutes');
 app.use('/api/manufacturer-orders', manufacturerOrdersRoutes(verifyRole));
 
-// --- FEATURE 3: Dynamic Pricing Catalog ---
-app.get('/api/products', async (req, res) => {
-    const products = await Product.find();
-    res.json(products);
-});
+// --- FEATURE 3: Dynamic Pricing Catalog (full CRUD, incl. manufacturer rate-setting form) ---
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes(verifyRole, upload));
 
 // --- FEATURE 4 (Retailer): Quality Control Hub Addresses ---
 const retailerHubRoutes = require('./routes/retailerHubRoutes');
 app.use('/api/retailer-hubs', retailerHubRoutes(verifyRole));
 
-app.post('/api/products', verifyRole('manufacturer'), async (req, res) => {
-    try {
-        const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
-        
-        const pricingData = calculateDynamicPricing({
-            baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions
-        });
 
-        const newProduct = new Product({
-            manufacturerId: req.user.userId, name, description, baseManufacturingCost, 
-            targetMarginPercentage, physicalWeightKg, dimensions, price: pricingData.finalPrice, stockCount
-        });
-        
-        await newProduct.save();
-        res.status(201).json({ message: "Product added to catalog!", engineMetrics: pricingData, product: newProduct });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
 
 // --- FEATURE 5 (Retailer): Trend cache/database API for Retailer UI ---
 const retailerTrendsRoutes = require('./routes/retailerTrendsRoutes');

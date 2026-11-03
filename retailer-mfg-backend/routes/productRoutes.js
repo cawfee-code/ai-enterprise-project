@@ -2,6 +2,22 @@ const express = require('express');
 const Product = require('../models/Product');
 const calculateDynamicPricing = require('../utils/costEngine');
 
+// multer parses multipart/form-data fields flat, so "dimensions[lengthCm]" arrives as a
+// literal key rather than a nested object the way a JSON body would. This reads dimensions
+// from either shape so the route works for both JSON requests and the multipart rate-setting form.
+function extractDimensions(body) {
+    if (body.dimensions && typeof body.dimensions === 'object') {
+        return body.dimensions;
+    }
+    const lengthCm = body['dimensions[lengthCm]'];
+    const widthCm = body['dimensions[widthCm]'];
+    const heightCm = body['dimensions[heightCm]'];
+    if (lengthCm !== undefined || widthCm !== undefined || heightCm !== undefined) {
+        return { lengthCm: Number(lengthCm), widthCm: Number(widthCm), heightCm: Number(heightCm) };
+    }
+    return undefined;
+}
+
 module.exports = (verifyRole, upload) => {
     const router = express.Router();
 
@@ -12,7 +28,11 @@ module.exports = (verifyRole, upload) => {
 
     router.post('/', verifyRole('manufacturer'), upload.single('designFile'), async (req, res) => {
         try {
-            const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
+            const { name, description, stockCount } = req.body;
+            const baseManufacturingCost = Number(req.body.baseManufacturingCost);
+            const targetMarginPercentage = Number(req.body.targetMarginPercentage);
+            const physicalWeightKg = Number(req.body.physicalWeightKg);
+            const dimensions = extractDimensions(req.body);
 
             const pricingData = calculateDynamicPricing({
                 baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions
@@ -40,7 +60,11 @@ module.exports = (verifyRole, upload) => {
                 return res.status(403).json({ error: "You can only edit your own products" });
             }
 
-            const { name, description, baseManufacturingCost, targetMarginPercentage, physicalWeightKg, dimensions, stockCount } = req.body;
+            const { name, description, stockCount } = req.body;
+            const baseManufacturingCost = req.body.baseManufacturingCost !== undefined ? Number(req.body.baseManufacturingCost) : undefined;
+            const targetMarginPercentage = req.body.targetMarginPercentage !== undefined ? Number(req.body.targetMarginPercentage) : undefined;
+            const physicalWeightKg = req.body.physicalWeightKg !== undefined ? Number(req.body.physicalWeightKg) : undefined;
+            const dimensions = extractDimensions(req.body);
 
             if (baseManufacturingCost || targetMarginPercentage || physicalWeightKg || dimensions) {
                 const pricingData = calculateDynamicPricing({

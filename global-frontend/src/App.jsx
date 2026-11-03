@@ -14,7 +14,7 @@ import CustomerSegmentation from './components/CustomerSegmentation';
 import ManufacturerCustomerTable from './components/ManufacturerCustomerTable';
 import ManufacturerAnalyticsCard from './components/ManufacturerAnalyticsCard';
 import ManufacturerOrderQueue from './components/ManufacturerOrderQueue';
-
+import ManufacturerProductRates from './components/ManufacturerProductRates';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -342,6 +342,8 @@ function App() {
 
                     {/* Feature 7 (CRM slice): manufacturer-scoped retailer customer table */}
                     <ManufacturerCustomerTable />
+
+                    <ManufacturerProductRates />
 
                     {/* Feature 2 (Manufacturer slice): Production queue Kanban board */}
                     <ManufacturerOrderQueue />
