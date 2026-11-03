@@ -16,6 +16,7 @@ import ManufacturerAnalyticsCard from './components/ManufacturerAnalyticsCard';
 import ManufacturerOrderQueue from './components/ManufacturerOrderQueue';
 import ManufacturerProductRates from './components/ManufacturerProductRates';
 import ManufacturerHubForm from './components/ManufacturerHubForm';
+import ManufacturerOrderAnalyticsCard from './components/ManufacturerOrderAnalyticsCard';
 
 function App() {
     const { login, user } = useContext(AuthContext);
@@ -351,6 +352,8 @@ function App() {
 
                     {/* Feature 2 (Manufacturer slice): Production queue Kanban board */}
                     <ManufacturerOrderQueue />
+
+                    <ManufacturerOrderAnalyticsCard />
                 </div>
             )}
         </Layout>

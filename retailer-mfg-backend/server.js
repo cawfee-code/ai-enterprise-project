@@ -127,6 +127,10 @@ app.use('/api/manufacturer-orders', manufacturerOrdersRoutes(verifyRole));
 const retailerDashboardRoutes = require('./routes/retailerDashboardRoutes');
 app.use('/api/retailer-dashboard', retailerDashboardRoutes(verifyRole));
 
+// --- FEATURE 8 (Manufacturer slice): thin parameterized endpoint for the Order Analytics card ---
+const manufacturerDashboardRoutes = require('./routes/manufacturerDashboardRoutes');
+app.use('/api/manufacturer-dashboard', manufacturerDashboardRoutes(verifyRole));
+
 // --- FEATURE 2 & 4: Distributed Lock Orders & Supply Chain Routing ---
 app.post('/api/orders', verifyRole('retailer'), async (req, res) => {
     const { productId, quantity, customerAddress } = req.body;
